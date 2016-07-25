@@ -35,6 +35,9 @@
 # python and ros. Note that it
 #
 # Authors: Kalesha Bullard
+#
+# Use espeak if you do not have cepstral
+#
 
 import os
 import sys
@@ -48,7 +51,7 @@ class Synthesizer(Enum):
 
 class SpeechSynthesizer(object):
 
-  synthesizer = Synthesizer.cepstral
+  synthesizer = Synthesizer.espeak
 
   # CONSTRUCTOR
   def __init__(self, voice='default'):
