@@ -1,0 +1,6 @@
+#! /usr/bin/env python
+
+import hlpr_speech_recognition.speech_listener
+
+if __name__ == '__main__':
+  hlpr_speech_recognition.speech_listener.listener()

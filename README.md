@@ -1,2 +1,8 @@
-# hlpr_speech
-All things related to speech, e.g., speech recognition, speech generation 
+# HLP-R Speech Package
+
+All things related to speech. 
+
+See individual readme's on how to get things working
+
+
+
