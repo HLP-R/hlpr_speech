@@ -45,7 +45,7 @@ class SpeechGui(QtGui.QWidget):
       self.raise_()
 
       # Create the publisher to publish the commands to
-      self.pub = rospy.Publisher('speech_commands', String)
+      self.pub = rospy.Publisher('hlpr_speech_commands', String)
       rospy.init_node("speech_gui")
   
   # Button handler after its clicked
