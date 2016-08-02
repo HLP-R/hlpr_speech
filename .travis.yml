@@ -77,7 +77,7 @@ before_install:
   - sudo apt-get install -y swig
   - sudo apt-get install -y espeak python-espeak python-pyaudio
   - sudo apt-get install -y python-pip
-  - yes | pip install aenum
+  - yes | sudo pip install aenum
   - git clone https://github.com/cmusphinx/sphinxbase.git
   - cd sphinxbase && ./autogen.sh && ./configure && make && sudo make install && cd ..
   - git clone https://github.com/cmusphinx/pocketsphinx.git
