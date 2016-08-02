@@ -127,5 +127,6 @@ script:
   - source devel/setup.bash
   - cd $CI_SOURCE_PATH
   - pwd
-  # currently no tests - just verify that we didn't break catkin_make
+  # Quick test for espeak speech_synth
+  - rosrun hlpr_speech_synthesis speech_synthesizer.py --say "Hello World"
   #- catkin_make run_tests && catkin_make test
