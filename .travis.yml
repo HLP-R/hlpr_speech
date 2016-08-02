@@ -128,5 +128,6 @@ script:
   - cd $CI_SOURCE_PATH
   - pwd
   # Quick test for espeak speech_synth
-  - rosrun hlpr_speech_synthesis speech_synthesizer.py --say "Hello World"
+  - cd ~/catkin_ws/install/lib/hlpr_speech_synthesis
+  - python speech_synthesizer.py --say "Hello World"
   #- catkin_make run_tests && catkin_make test
