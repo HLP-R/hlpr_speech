@@ -73,6 +73,7 @@ before_install:
   - sudo rosdep init
   - rosdep update
   # Prereqs
+  - sudo apt-get install -y python-dev
   - sudo apt-get install -y espeak python-espeak python-pyaudio
   - git clone https://github.com/cmusphinx/sphinxbase.git
   - cd sphinxbase && ./autogen.sh && ./configure && make && sudo make install && cd ..
