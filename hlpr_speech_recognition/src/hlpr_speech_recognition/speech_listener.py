@@ -43,7 +43,9 @@
 
 import rospy
 import rosgraph
+import rospkg
 import socket
+import yaml
 from std_msgs.msg import String
 from hlpr_speech_msgs.msg import StampedString, SpeechCommand
 
@@ -78,17 +80,14 @@ class SpeechListener:
       rospy.Subscriber(self.recog_topic, String, self.callback)
 
     #mapping from keywords to commands
-    self.keywords_to_commands = { "GREETING"       : ["HELLO POLI!"],
-                                  "HEAR_CHECK"     : ["CAN YOU HEAR ME?"],
-                                  "SMALL_TALK"     : ["HOW ARE YOU TODAY?"],
-                                  "START_EXP"      : ["LET'S BEGIN THE EXPERIMENT"],
-                                  "OPEN_HAND"      : ["OPEN YOUR HAND"],
-                                  "CLOSE_HAND"     : ["CLOSE YOUR HAND"],
-                                  "START_GC"       : ["RELEASE YOUR ARM"],
-                                  "END_GC"         : ["HOLD YOUR ARM"],
-                                  "KEYFRAME_START" : ["START HERE", "BEGIN HERE"],
-                                  "KEYFRAME_END"   : ["END HERE", "FINISH HERE"],
-                                  "KEYFRAME"       : ["GO HERE"]}
+    rospack = rospkg.RosPack()
+    kps_path = rospack.get_path('hlpr_speech_recognition') + '/data/kps.yaml'
+
+    self.keywords_to_commands = {}
+    for data in yaml.load_all(file(kps_path,'r')):
+       self.keywords_to_commands[str(data['tag'])] = [str(data[('speech')])]
+
+    print self.keywords_to_commands
 
     self._commandBuffSize = commandBuffSize
     #self.commandsQueue = deque(maxlen=self._commandBuffSize)
