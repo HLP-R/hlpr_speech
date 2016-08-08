@@ -85,7 +85,7 @@ class SpeechListener:
 
     self.keywords_to_commands = {}
     for data in yaml.load_all(file(kps_path,'r')):
-       self.keywords_to_commands[str(data['tag'])] = [str(data[('speech')])]
+       self.keywords_to_commands[str(data['tag'])] = data['speech']
 
     print self.keywords_to_commands
 
