@@ -1,32 +1,32 @@
 tag: "GREETING"
-speech: "HELLO POLI!"
+speech: ["HELLO POLI!"]
 ---
 tag: "HEAR_CHECK"
-speech: "CAN YOU HEAR ME?"
+speech: ["CAN YOU HEAR ME?"]
 ---
 tag: "SMALL_TALK"
-speech: "HOW ARE YOU TODAY?"
+speech: ["HOW ARE YOU TODAY?"]
 ---
 tag: "START_EXP"
-speech: "LET'S BEGIN THE EXPERIMENT"
+speech: ["LET'S BEGIN THE EXPERIMENT"]
 ---
 tag: "OPEN_HAND"
-speech: "OPEN YOUR HAND"
+speech: ["OPEN YOUR HAND"]
 ---
 tag: "CLOSE_HAND"
-speech: "CLOSE YOUR HAND"
+speech: ["CLOSE YOUR HAND"]
 ---
 tag: "START_GC"
-speech: "RELEASE YOUR ARM"
+speech: ["RELEASE YOUR ARM"]
 ---
 tag: "END_GC"
-speech: "HOLD YOUR ARM"
+speech: ["HOLD YOUR ARM"]
 ---
 tag: "KEYFRAME_START"
-speech: "START HERE,BEGIN HERE"
+speech: ["START HERE","BEGIN HERE"]
 ---
 tag: "KEYFRAME_END"
-speech: "END HERE,FINISH HERE"
+speech: ["END HERE","FINISH HERE"]
 ---
 tag: "KEYFRAME"
-speech: "GO HERE"
+speech: ["GO HERE"]
