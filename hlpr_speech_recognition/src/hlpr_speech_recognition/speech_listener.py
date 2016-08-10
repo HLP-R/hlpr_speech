@@ -82,11 +82,14 @@ class SpeechListener:
                                   "HEAR_CHECK"     : ["CAN YOU HEAR ME?"],
                                   "SMALL_TALK"     : ["HOW ARE YOU TODAY?"],
                                   "START_EXP"      : ["LET'S BEGIN THE EXPERIMENT"],
+                                  "START_LEARN"    : ["LET'S LEARN A NEW TASK"],
+                                  "START_TRANS"    : ["LET'S REPEAT THE TASK"],
                                   "OPEN_HAND"      : ["OPEN YOUR HAND"],
                                   "CLOSE_HAND"     : ["CLOSE YOUR HAND"],
                                   "START_GC"       : ["RELEASE YOUR ARM"],
                                   "END_GC"         : ["HOLD YOUR ARM"],
-                                  "KEYFRAME_START" : ["START HERE", "BEGIN HERE"],
+                                  "KEYFRAME_START" : ["START HERE"],
+                                  "TRAJ_START" : ["BEGIN HERE"],
                                   "KEYFRAME_END"   : ["END HERE", "FINISH HERE"],
                                   "KEYFRAME"       : ["GO HERE"]}
 
