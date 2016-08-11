@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+
+   <!-- Start the speech_listener node recording action server -->
+    <node name="speech_listener" pkg="hlpr_speech_recognition" type="speech_listener" respawn="false" output="screen" >
+        <!-- yaml files that specify keywords to commands -->
+        <!-- default: data/kps.yaml -->
+        <param name="yaml_file" value="kps.yaml"/>
+    </node>
+
+    <!-- Start the hlpr_speech_recognizer 
+     Note: just an example of how to launch with params 
+           like the gui, but not tested with mic input! -->
+    <node name="hlpr_speech_recognizer" pkg="hlpr_speech_recognition" type="hlpr_speech_recognizer" respawn="false" output="screen">
+        <!-- list of yaml files that specify keywords to commands, mirrors keywords of listener -->
+        <!-- default: data/kps.yaml -->
+        <param name="yaml_file" value="kps.yaml"/>
+    </node>
+   
+    
+</launch>

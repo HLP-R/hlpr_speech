@@ -49,6 +49,7 @@ import yaml
 from std_msgs.msg import String
 from hlpr_speech_msgs.msg import StampedString, SpeechCommand
 
+
 def get_topic_type(topic_name):
   if( not topic_name[0] == '/'):
     topic_name = '/' + topic_name
@@ -66,7 +67,7 @@ def get_topic_type(topic_name):
 
 class SpeechListener:
   def __init__(self, commandBuffSize=10):
-    self.recog_topic = "hlpr_speech_commands"
+    self.recog_topic = "hlpr_speech_commands"    
 
     self.msg_type = 0
     # Listen to the voice based on topic type
@@ -81,11 +82,21 @@ class SpeechListener:
 
     #mapping from keywords to commands
     rospack = rospkg.RosPack()
-    kps_path = rospack.get_path('hlpr_speech_recognition') + '/data/kps.yaml'
 
+    # Get the yaml file param, or use the default one
+    self.DEFAULT_YAML_FILE = ["kps.yaml"]
+
+    if rospy.has_param("/speech_listener/yaml_file"):
+      self._yamlKeywords = [rospy.get_param("/speech_listener/yaml_file")]
+    else:
+      self._yamlKeywords = ["kps.yaml"]
+      
     self.keywords_to_commands = {}
-    for data in yaml.load_all(file(kps_path,'r')):
-       self.keywords_to_commands[str(data['tag'])] = data['speech']
+
+    for yamlfile in self._yamlKeywords:
+       kps_path = rospack.get_path('hlpr_speech_recognition') + '/data/' + yamlfile
+       for data in yaml.load_all(file(kps_path,'r')):
+          self.keywords_to_commands[str(data['tag'])] = data['speech']
 
     print self.keywords_to_commands
 

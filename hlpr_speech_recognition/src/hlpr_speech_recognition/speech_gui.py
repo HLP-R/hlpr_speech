@@ -1,6 +1,7 @@
 import rospy
 import sys
 import rospkg
+import yaml
 from std_msgs.msg import String
 from PyQt4 import QtGui, QtCore
 
@@ -19,15 +20,30 @@ class SpeechGui(QtGui.QWidget):
 
       # get an instance of RosPack with the default search paths
       rospack = rospkg.RosPack()
-      kps_path = rospack.get_path('hlpr_speech_recognition') + '/data/kps.txt'
+      #kps_path = rospack.get_path('hlpr_speech_recognition') + '/data/kps.txt'
 
-      # Read commands from the kps.txt file and populate the list
-      with open(kps_path) as f:
-          commands = f.read().splitlines()
-         
-      positions = [(i,j) for i in range(len(commands)) for j in range(3)]
-        
-      for position, name in zip(positions, commands):
+      #mapping from keywords to commands
+  
+      # Get the yaml file param, or use the default one
+      self.DEFAULT_YAML_FILE = "kps.yaml"
+
+      if rospy.has_param("/speech_gui/yaml_file"):
+        self._yamlKeywords = rospy.get_param("/speech_gui/yaml_file")
+      else:
+        self._yamlKeywords = "kps.yaml"
+      
+      kps_path = rospack.get_path('hlpr_speech_recognition') + '/data/' + self._yamlKeywords
+
+      self.commands = []
+      for data in yaml.load_all(file(kps_path,'r')):
+          for key, value in data.iteritems():
+            if key == "speech":
+              for i in value:
+                self.commands.append(i)
+ 
+      positions = [(i,j) for i in range(len(self.commands)) for j in range(3)]
+           
+      for position, name in zip(positions, self.commands):
           button = QtGui.QPushButton(name)
           button.setObjectName('%s' % name)
           button.setFont(newFont)
