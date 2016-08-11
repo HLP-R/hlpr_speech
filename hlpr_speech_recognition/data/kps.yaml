@@ -10,6 +10,15 @@ speech: ["HOW ARE YOU TODAY?"]
 tag: "START_EXP"
 speech: ["LET'S BEGIN THE EXPERIMENT"]
 ---
+tag: "RECORD_ALL_START"
+speech: ["MOVE HERE"]
+---
+tag: "START_LEARN"
+speech: ["LET'S LEARN A NEW TASK"]
+---
+tag: "START_TRANS"
+speech: ["LET'S REPEAT THE TASK"]
+---
 tag: "OPEN_HAND"
 speech: ["OPEN YOUR HAND"]
 ---
@@ -26,7 +35,7 @@ tag: "KEYFRAME_START"
 speech: ["START HERE","BEGIN HERE"]
 ---
 tag: "KEYFRAME_END"
-speech: ["END HERE","FINISH HERE"]
+speech: ["END HERE"]
 ---
 tag: "KEYFRAME"
 speech: ["GO HERE"]
