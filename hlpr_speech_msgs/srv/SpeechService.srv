@@ -1,0 +1,5 @@
+#request values
+bool get_last
+---
+#response values
+string speech_cmd
