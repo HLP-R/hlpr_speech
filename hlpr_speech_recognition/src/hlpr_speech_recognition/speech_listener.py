@@ -35,6 +35,7 @@
 # python and ros. Note that it
 #
 # Authors: Baris Akgun, Priyanka Khante
+# Edited: Vivian Chu, 8-29-16 - rosparam and multiple yaml files
 #
 # A convenience class to map speech recognition result to commands 
 # while keeping the time stamp.
@@ -48,6 +49,7 @@ import socket
 import yaml
 from std_msgs.msg import String
 from hlpr_speech_msgs.msg import StampedString, SpeechCommand
+from hlpr_speech_msgs.srv import SpeechService
 
 
 def get_topic_type(topic_name):
@@ -66,8 +68,27 @@ def get_topic_type(topic_name):
   return None
 
 class SpeechListener:
-  def __init__(self, commandBuffSize=10):
-    self.recog_topic = "hlpr_speech_commands"    
+
+  COMMAND_TOPIC_PARAM = "speech_command_topic"
+  SERVICE_TOPIC_PARAM = "speech_service_topic"
+  KEYWORDS_PARAM = "speech_keywords"
+
+  def __init__(self, commandBuffSize=10, init_node=True):
+
+    if (init_node):
+      # initialize the ros node
+      rospy.init_node("speech_listener")
+  
+    # Default values for speech listener
+    rospack = rospkg.RosPack()
+    default_pub_topic = 'hlpr_speech_commands'
+    default_yaml_files = [rospack.get_path('hlpr_speech_recognition')+'/data/kps.yaml']
+    default_service_topic = 'get_last_speech_cmd'
+
+    # Pull values from rosparam
+    self.recog_topic = rospy.get_param("~pub_topic", default_pub_topic)
+    self.yaml_files = rospy.get_param("~yaml_list", default_yaml_files)
+    self.service_topic = rospy.get_param("~speech_service_topic", default_service_topic)
 
     self.msg_type = 0
     # Listen to the voice based on topic type
@@ -80,35 +101,31 @@ class SpeechListener:
     else: #elif get_topic_type(self.recog_topic) == 'String':
       rospy.Subscriber(self.recog_topic, String, self.callback)
 
-    #mapping from keywords to commands
-    rospack = rospkg.RosPack()
-
-    # Get the yaml file param, or use the default one
-    self.DEFAULT_YAML_FILE = ["kps.yaml"]
-
-    if rospy.has_param("/speech_listener/yaml_file"):
-      self._yamlKeywords = [rospy.get_param("/speech_listener/yaml_file")]
-    else:
-      self._yamlKeywords = ["kps.yaml"]
-      
+    # Converts the yaml files into keywords to store into the dictionary
     self.keywords_to_commands = {}
-
-    for yamlfile in self._yamlKeywords:
-       kps_path = rospack.get_path('hlpr_speech_recognition') + '/data/' + yamlfile
+    for kps_path in self.yaml_files:
        for data in yaml.load_all(file(kps_path,'r')):
           self.keywords_to_commands[str(data['tag'])] = data['speech']
 
-    print self.keywords_to_commands
+    # Store this on the rosparam server now
+    rospy.set_param(SpeechListener.KEYWORDS_PARAM, self.keywords_to_commands)
+    rospy.set_param(SpeechListener.COMMAND_TOPIC_PARAM, self.recog_topic)
+    rospy.set_param(SpeechListener.SERVICE_TOPIC_PARAM, self.service_topic)
+
+    #print self.keywords_to_commands
 
     self._commandBuffSize = commandBuffSize
     #self.commandsQueue = deque(maxlen=self._commandBuffSize)
 
+    # Flags for starting/stopping the node
     self.spinning = False
-
     self.last_command_fresh = False
-
     self.last_ts = None
     self.last_string = None
+
+    # Setup service call
+    s = rospy.Service(self.service_topic, SpeechService, self.get_last_command)
+    rospy.loginfo("Speech listener initialized")
 
   # The following function is called each time, for every message
   def callback(self, msg):
@@ -134,11 +151,18 @@ class SpeechListener:
         if data.find(word) > -1:
           return command
 
-  def get_last_command(self):
+  # This is now made a service call
+  def get_last_command(self, req=None):
+    # returns a service request error
     if not self.last_command_fresh:
       return None
+
+    # The command hasn't been ask for before
     self.last_command_fresh = False
-    return self.last_command
+    if (req): 
+      return {'speech_cmd': self.last_command}
+    else:
+      return self.last_command
 
   def get_last_string(self):
     return self.last_string
@@ -153,7 +177,6 @@ class SpeechListener:
 
   def spin(self):
     self.spinning = True
-    rospy.init_node('speech_listener', anonymous=True)
     # if shutdown, need to clean up the commands queue
     rospy.on_shutdown(self.cleanup)
     rospy.spin()
