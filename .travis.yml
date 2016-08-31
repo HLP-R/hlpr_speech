@@ -81,7 +81,7 @@ before_install:
   - tar -xzvf sphinxbase-5prealpha.tar.gz && mv sphinxbase-5prealpha sphinxbase
   - cd sphinxbase && ./configure && make && sudo make install && cd ..
   - wget https://sourceforge.net/projects/cmusphinx/files/pocketsphinx/5prealpha/pocketsphinx-5prealpha.tar.gz
-  - tar -xzvf pocketsphinx-5prealpha.tar.gz && mv pocketsphinx-5prealpha.tar.gz pocketsphinx
+  - tar -xzvf pocketsphinx-5prealpha.tar.gz && mv pocketsphinx-5prealpha pocketsphinx
   - cd pocketsphinx && ./configure && make clean all && make check && sudo make install
   - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
