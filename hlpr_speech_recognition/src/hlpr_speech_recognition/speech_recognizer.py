@@ -134,7 +134,6 @@ class SpeechRecognizer():
         hypothesis = decoder.hyp()
         maxProb = 0
         for seg in decoder.seg():
-          print seg.prob
           if seg.prob > maxProb:
             selectedSegment = seg
             maxProb = seg.prob
@@ -142,7 +141,7 @@ class SpeechRecognizer():
           print ([(seg.word, seg.prob, seg.start_frame, seg.end_frame) for seg in decoder.seg()])
 
         if selectedSegment:
-          if selectedSegment.prob > self.RECOGNITION_THRESH:
+          if selectedSegment.prob > self.RECOGNITION_THRESHOLD:
             if not hypothesis.hypstr == selectedSegment.word:
               print "Hypothesis and the selected segment do not match! Going with the selected segment"
             

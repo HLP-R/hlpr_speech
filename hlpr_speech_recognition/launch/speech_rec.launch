@@ -6,8 +6,7 @@
 
    <!-- Params for real input with microphone -->
    <arg name="verbose" default="true" />
-   <!--arg name="pub_topic" default="hlpr_speech_commands" /-->
-   <arg name="pub_topic" default="test" />
+   <arg name="pub_topic" default="hlpr_speech_commands" />
    <arg name="str_msg" default="false" />
    <arg name="rec_threshold" default="300" />
    <arg name="dict_path" default="$(find hlpr_speech_recognition)/data/kps.dic" />
