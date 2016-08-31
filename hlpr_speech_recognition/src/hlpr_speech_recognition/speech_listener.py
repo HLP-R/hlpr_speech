@@ -51,22 +51,6 @@ from std_msgs.msg import String
 from hlpr_speech_msgs.msg import StampedString, SpeechCommand
 from hlpr_speech_msgs.srv import SpeechService
 
-
-def get_topic_type(topic_name):
-  if( not topic_name[0] == '/'):
-    topic_name = '/' + topic_name
-  try:
-    rosgraph.Master('/rostopic').getPid()
-  except socket.error:
-    print 'No rosmaster found'
-    return None
-  master = rosgraph.Master('/rostopic')
-  types = [t_type for t_name, t_type in master.getTopicTypes() if t_name == topic_name]
-  if types:
-    tmp = types[0].split('/')
-    return tmp[-1]
-  return None
-
 class SpeechListener:
 
   COMMAND_TOPIC_PARAM = "speech_command_topic"
@@ -89,17 +73,15 @@ class SpeechListener:
     self.recog_topic = rospy.get_param("~pub_topic", default_pub_topic)
     self.yaml_files = rospy.get_param("~yaml_list", default_yaml_files)
     self.service_topic = rospy.get_param("~speech_service_topic", default_service_topic)
+    self.str_msg = rospy.get_param("~str_msg", False) # True if message is only str, false includes header
 
     self.msg_type = 0
     # Listen to the voice based on topic type
-    if get_topic_type(self.recog_topic) == 'StampedString':
-      rospy.Subscriber(self.recog_topic, StampedString, self.callback)
-      self.msg_type = 1
-    elif get_topic_type(self.recog_topic) == 'SpeechCommand':
-      rospy.Subscriber(self.recog_topic, SpeechCommand, self.callback)
-      self.msg_type = 2
-    else: #elif get_topic_type(self.recog_topic) == 'String':
+    if self.str_msg:
       rospy.Subscriber(self.recog_topic, String, self.callback)
+    else:
+      rospy.Subscriber(self.recog_topic, StampedString, self.callback)
+      self.msg_type = 1 
 
     # Converts the yaml files into keywords to store into the dictionary
     self.keywords_to_commands = {}
@@ -187,5 +169,4 @@ def listener():
 
 if __name__ == '__main__':
   listener()
-  #print get_topic_type('/hlpr_speech_commands') 
   
