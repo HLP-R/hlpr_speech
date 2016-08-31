@@ -73,17 +73,17 @@ before_install:
   - sudo rosdep init
   - rosdep update
   # Prereqs
-  - sudo apt-get install -y python-dev
-  - sudo apt-get install -y swig
+  - sudo apt-get install -y python-dev bison swig
   - sudo apt-get install -y espeak python-espeak python-pyaudio
   - sudo apt-get install -y python-pip
   - yes | sudo pip install aenum
-  - git clone https://github.com/cmusphinx/sphinxbase.git
-  - cd sphinxbase && ./autogen.sh && ./configure && make && sudo make install && cd ..
-  - git clone https://github.com/cmusphinx/pocketsphinx.git
-  - cd pocketsphinx && ./autogen.sh && ./configure && make clean all && make check && sudo make install
+  - wget https://sourceforge.net/projects/cmusphinx/files/sphinxbase/5prealpha/sphinxbase-5prealpha.tar.gz
+  - tar -xzvf sphinxbase-5prealpha.tar.gz && mv sphinxbase-5prealpha sphinxbase
+  - cd sphinxbase && ./configure && make && sudo make install && cd ..
+  - wget https://sourceforge.net/projects/cmusphinx/files/pocketsphinx/5prealpha/pocketsphinx-5prealpha.tar.gz
+  - tar -xzvf pocketsphinx-5prealpha.tar.gz && mv pocketsphinx-5prealpha pocketsphinx
+  - cd pocketsphinx && ./configure && make clean all && sudo make install
   - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-
 
 # Create a catkin workspace with the package under integration.
 install:
