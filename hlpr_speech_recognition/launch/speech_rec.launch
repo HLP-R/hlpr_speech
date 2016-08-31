@@ -21,6 +21,7 @@
    <!-- Start the speech_listener node recording action server -->
     <node name="speech_listener" pkg="hlpr_speech_recognition" type="speech_listener" respawn="false" output="screen" >
          <param name="pub_topic" value="$(arg pub_topic)"/>
+         <param name="str_msg" value="$(arg str_msg)"/>
          <rosparam param="yaml_list" subst_value="True"> [$(arg yaml_list)]</rosparam>
     </node>
 

@@ -49,7 +49,7 @@ import rospkg
 # Global values specific to speech
 N_CHANNELS = 1
 RATE = 16000
-BUFFER_SIZE = 2048
+BUFFER_SIZE = 6144
 
 class SpeechRecognizer():
 

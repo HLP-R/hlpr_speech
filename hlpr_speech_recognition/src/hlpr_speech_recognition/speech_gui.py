@@ -45,6 +45,7 @@ import sys
 import rospkg
 import yaml
 from std_msgs.msg import String
+from hlpr_speech_msgs.msg import StampedString
 from PyQt4 import QtGui, QtCore
 
 class SpeechGui(QtGui.QWidget):
@@ -72,6 +73,7 @@ class SpeechGui(QtGui.QWidget):
       # Pull values from rosparam
       self.recog_topic = rospy.get_param("~pub_topic", default_pub_topic)
       self.yaml_files = rospy.get_param("~yaml_list", default_yaml_files)
+      self.str_msg = rospy.get_param("~str_msg", False)
 
       self.commands = []
       for kps_path in self.yaml_files:
@@ -102,7 +104,7 @@ class SpeechGui(QtGui.QWidget):
       self.raise_()
 
       # Create the publisher to publish the commands to
-      self.pub = rospy.Publisher(self.recog_topic, String, queue_size=1)
+      self.pub = rospy.Publisher(self.recog_topic, StampedString, queue_size=1)
 
       rospy.loginfo("Finished initializing speech GUI")
   
@@ -111,8 +113,15 @@ class SpeechGui(QtGui.QWidget):
       clicked_button = self.sender()
 
       # Publish everytime a command is selected from the combo box
-      print (str(clicked_button.objectName()))
-      self.pub.publish(str(clicked_button.objectName()))
+      command = str(clicked_button.objectName())
+      print (command)
+      if self.str_msg:
+        self.pub.publish(command)
+      else:
+        keyphrase = StampedString()
+        keyphrase.keyphrase = command
+        keyphrase.stamp = rospy.get_rostime()
+        self.pub.publish(keyphrase)
 
 def gui_start():
     app = QtGui.QApplication(sys.argv)
