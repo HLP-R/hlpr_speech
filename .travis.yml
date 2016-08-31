@@ -77,10 +77,10 @@ before_install:
   - sudo apt-get install -y espeak python-espeak python-pyaudio
   - sudo apt-get install -y python-pip
   - yes | sudo pip install aenum
-  - wget https://sourceforge.net/projects/cmusphinx/files/sphinxbase/5prealpha/sphinxbase-5prealpha.tar.gz/download
+  - wget https://sourceforge.net/projects/cmusphinx/files/sphinxbase/5prealpha/sphinxbase-5prealpha.tar.gz
   - tar -xzvf sphinxbase-5prealpha.tar.gz && mv sphinxbase-5prealpha sphinxbase
   - cd sphinxbase && ./configure && make && sudo make install && cd ..
-  - wget https://sourceforge.net/projects/cmusphinx/files/pocketsphinx/5prealpha/pocketsphinx-5prealpha.tar.gz/download
+  - wget https://sourceforge.net/projects/cmusphinx/files/pocketsphinx/5prealpha/pocketsphinx-5prealpha.tar.gz
   - tar -xzvf pocketsphinx-5prealpha.tar.gz && mv pocketsphinx-5prealpha.tar.gz pocketsphinx
   - cd pocketsphinx && ./configure && make clean all && make check && sudo make install
   - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
