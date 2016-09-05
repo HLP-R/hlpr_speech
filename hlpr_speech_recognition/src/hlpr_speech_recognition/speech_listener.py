@@ -56,6 +56,7 @@ class SpeechListener:
   COMMAND_TOPIC_PARAM = "speech_command_topic"
   SERVICE_TOPIC_PARAM = "speech_service_topic"
   KEYWORDS_PARAM = "speech_keywords"
+  COMMAND_TYPE = "speech_command_type"
 
   def __init__(self, commandBuffSize=10, init_node=True):
 
@@ -75,13 +76,15 @@ class SpeechListener:
     self.service_topic = rospy.get_param("~speech_service_topic", default_service_topic)
     self.str_msg = rospy.get_param("~str_msg", False) # True if message is only str, false includes header
 
-    self.msg_type = 0
+    self.msg_type = String
     # Listen to the voice based on topic type
     if self.str_msg:
       rospy.Subscriber(self.recog_topic, String, self.callback)
+      rospy.set_param(SpeechListener.COMMAND_TYPE, "String")
     else:
       rospy.Subscriber(self.recog_topic, StampedString, self.callback)
-      self.msg_type = 1 
+      rospy.set_param(SpeechListener.COMMAND_TYPE, "StampedString")
+      self.msg_type = StampedString
 
     # Converts the yaml files into keywords to store into the dictionary
     self.keywords_to_commands = {}
@@ -112,12 +115,9 @@ class SpeechListener:
   # The following function is called each time, for every message
   def callback(self, msg):
 
-    if self.msg_type == 1:
+    if self.msg_type == StampedString:
       self.last_string = msg.keyphrase
       self.last_ts = msg.stamp
-    elif self.msg_type == 2:
-      self.last_string = msg.stamped_string.keyphrase
-      self.last_ts = msg.data.stamped_string.stamp
     else:
       self.last_string = msg.data
 
