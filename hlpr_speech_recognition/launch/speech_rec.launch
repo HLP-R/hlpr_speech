@@ -3,44 +3,36 @@
 
    <!-- Param for if we are launching mic vs. fake speech input -->
    <arg name="speech_gui" default="true" />
+   <arg name="speech_config_file" default="$(find hlpr_speech_recognition)/config/speech.yaml" />
 
    <!-- Params for real input with microphone -->
-   <arg name="verbose" default="true" />
-   <arg name="pub_topic" default="hlpr_speech_commands" />
-   <arg name="str_msg" default="false" />
-   <arg name="rec_threshold" default="300" />
    <arg name="dict_path" default="$(find hlpr_speech_recognition)/data/kps.dic" />
    <arg name="kps_path" default="$(find hlpr_speech_recognition)/data/kps.txt" />
 
    <!-- Params for the speech listener - used for real or fake speech -->
-   <arg name="yaml_list" default="$(find hlpr_speech_recognition)/data/kps.yaml" />
    <!-- Example of how to have multiple yaml files -->
    <!-- WARNING: currently if there are duplicate keys, the 2nd file will overwrite the first -->
    <!--arg name="yaml_list" default="$(find hlpr_speech_recognition)/data/kps.yaml, $(find hlpr_speech_recognition)/data/kps.yaml" /-->
+   <arg name="yaml_list" default="$(find hlpr_speech_recognition)/data/kps.yaml" />
 
-   <!-- Start the speech_listener node recording action server -->
-    <node name="speech_listener" pkg="hlpr_speech_recognition" type="speech_listener" respawn="false" output="screen" >
-         <param name="pub_topic" value="$(arg pub_topic)"/>
-         <param name="str_msg" value="$(arg str_msg)"/>
-         <rosparam param="yaml_list" subst_value="True"> [$(arg yaml_list)]</rosparam>
-    </node>
+   <!-- Load parameters for speech -->
+   <rosparam command="load" file="$(arg speech_config_file)" />
 
-    <node name="speech_gui" pkg="hlpr_speech_recognition" type="speech_gui" respawn="false" output="screen" if="$(arg speech_gui)">
-         <param name="pub_topic" value="$(arg pub_topic)"/>
-        `<rosparam param="yaml_list" subst_value="True"> [$(arg yaml_list)]</rosparam>
-    </node>
+    <!-- Start the speech_listener node recording action server -->
+    <include file="$(find hlpr_speech_recognition)/launch/speech_listener.launch">
+         <arg name="config_file" value="$(arg speech_config_file)"/>
+         <arg name="yaml_list" value="$(arg yaml_list)"/>
+    </include>
+
+    <!-- Start the GUI if speech_gui set to true -->
+    <node name="speech_gui" pkg="hlpr_speech_recognition" type="speech_gui" respawn="false" output="screen" if="$(arg speech_gui)"/>
 
     <!-- Start the hlpr_speech_recognizer 
      Note: just an example of how to launch with params 
            like the gui, but not tested with mic input! -->
     <node name="speech_recognizer" pkg="hlpr_speech_recognition" type="speech_recognizer" respawn="false" output="screen" unless="$(arg speech_gui)">
-         <param name="verbose" value="$(arg verbose)"/>
-         <param name="pub_topic" value="$(arg pub_topic)"/>
-         <param name="str_msg" value="$(arg str_msg)"/>
-         <param name="rec_threshold" value="$(arg rec_threshold)"/>
          <param name="dict_path" value="$(arg dict_path)" />
          <param name="kps_path" value="$(arg kps_path)" />
     </node>
-   
     
 </launch>

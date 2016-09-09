@@ -47,6 +47,7 @@ import yaml
 from std_msgs.msg import String
 from hlpr_speech_msgs.msg import StampedString
 from PyQt4 import QtGui, QtCore
+from .speech_listener import SpeechListener
 
 class SpeechGui(QtGui.QWidget):
 
@@ -68,21 +69,21 @@ class SpeechGui(QtGui.QWidget):
       # Default values for speech listeners  
       rospack = rospkg.RosPack()
       default_pub_topic = 'hlpr_speech_commands'
-      default_yaml_files = [rospack.get_path('hlpr_speech_recognition')+'/data/kps.yaml']
 
       # Pull values from rosparam
-      self.recog_topic = rospy.get_param("~pub_topic", default_pub_topic)
-      self.yaml_files = rospy.get_param("~yaml_list", default_yaml_files)
-      self.str_msg = rospy.get_param("~str_msg", False)
+      self.recog_topic = rospy.get_param(SpeechListener.COMMAND_TOPIC_PARAM, default_pub_topic)
+      self.str_msg = rospy.get_param(SpeechListener.COMMAND_TYPE, False)
 
-      self.commands = []
-      for kps_path in self.yaml_files:
-        for data in yaml.load_all(file(kps_path,'r')):
-            for key, value in data.iteritems():
-              if key == "speech":
-                for i in value:
-                  if i not in self.commands: # remove duplicates
-                    self.commands.append(i)
+      # Wait for listener to be ready to know what commands to send
+      self.service_topic = rospy.get_param(SpeechListener.SERVICE_TOPIC_PARAM, None)
+      rospy.loginfo("Waiting for speech service for keywords")
+      rospy.wait_for_service(self.service_topic)
+      rospy.loginfo("Speech service loaded")
+
+      # Get commands from the listener
+      self.keywords = rospy.get_param(SpeechListener.KEYWORDS_PARAM, dict()).values()
+      self.commands = [val for sublist in self.keywords for val in sublist]
+      self.commands.sort()
  
       positions = [(i,j) for i in range(len(self.commands)) for j in range(3)]
            
@@ -114,8 +115,7 @@ class SpeechGui(QtGui.QWidget):
 
       # Publish everytime a command is selected from the combo box
       command = str(clicked_button.objectName())
-      print (command)
-      if self.str_msg:
+      if self.str_msg == 'String':
         self.pub.publish(command)
       else:
         keyphrase = StampedString()

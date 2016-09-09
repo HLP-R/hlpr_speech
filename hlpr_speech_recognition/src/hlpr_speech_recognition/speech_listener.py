@@ -53,10 +53,10 @@ from hlpr_speech_msgs.srv import SpeechService
 
 class SpeechListener:
 
-  COMMAND_TOPIC_PARAM = "speech_command_topic"
-  SERVICE_TOPIC_PARAM = "speech_service_topic"
-  KEYWORDS_PARAM = "speech_keywords"
-  COMMAND_TYPE = "speech_command_type"
+  COMMAND_TOPIC_PARAM = "/speech/publish_topic"
+  SERVICE_TOPIC_PARAM = "/speech/service_topic"
+  KEYWORDS_PARAM = "/speech/keywords"
+  COMMAND_TYPE = "/speech/command_type"
 
   def __init__(self, commandBuffSize=10, init_node=True):
 
@@ -71,20 +71,12 @@ class SpeechListener:
     default_service_topic = 'get_last_speech_cmd'
 
     # Pull values from rosparam
-    self.recog_topic = rospy.get_param("~pub_topic", default_pub_topic)
+    self.recog_topic = rospy.get_param(SpeechListener.COMMAND_TOPIC_PARAM, default_pub_topic)
     self.yaml_files = rospy.get_param("~yaml_list", default_yaml_files)
-    self.service_topic = rospy.get_param("~speech_service_topic", default_service_topic)
-    self.str_msg = rospy.get_param("~str_msg", False) # True if message is only str, false includes header
+    self.service_topic = rospy.get_param(SpeechListener.SERVICE_TOPIC_PARAM, default_service_topic)
+    self.msg_type = eval(rospy.get_param(SpeechListener.COMMAND_TYPE, 'StampedString')) # True if message is only str, false includes header
 
-    self.msg_type = String
-    # Listen to the voice based on topic type
-    if self.str_msg:
-      rospy.Subscriber(self.recog_topic, String, self.callback)
-      rospy.set_param(SpeechListener.COMMAND_TYPE, "String")
-    else:
-      rospy.Subscriber(self.recog_topic, StampedString, self.callback)
-      rospy.set_param(SpeechListener.COMMAND_TYPE, "StampedString")
-      self.msg_type = StampedString
+    rospy.Subscriber(self.recog_topic, self.msg_type, self.callback)
 
     # Converts the yaml files into keywords to store into the dictionary
     self.keywords_to_commands = {}
@@ -94,10 +86,6 @@ class SpeechListener:
 
     # Store this on the rosparam server now
     rospy.set_param(SpeechListener.KEYWORDS_PARAM, self.keywords_to_commands)
-    rospy.set_param(SpeechListener.COMMAND_TOPIC_PARAM, self.recog_topic)
-    rospy.set_param(SpeechListener.SERVICE_TOPIC_PARAM, self.service_topic)
-
-    #print self.keywords_to_commands
 
     self._commandBuffSize = commandBuffSize
     #self.commandsQueue = deque(maxlen=self._commandBuffSize)

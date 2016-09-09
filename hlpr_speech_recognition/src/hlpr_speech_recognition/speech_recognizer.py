@@ -45,6 +45,7 @@ from pocketsphinx.pocketsphinx import *
 from sphinxbase.sphinxbase import *
 import pyaudio
 import rospkg
+from .speech_listener import SpeechListener
 
 # Global values specific to speech
 N_CHANNELS = 1
@@ -72,12 +73,12 @@ class SpeechRecognizer():
     modeldir = rospy.get_param("~model_dir", default_modeldir)
     dict_path = rospy.get_param("~dict_path", default_dict_path)
     kps_path = rospy.get_param("~kps_path", default_kps_path)
-    self.verbose = rospy.get_param("~verbose", True) # default prints out more info
-    self.str_msg = rospy.get_param("~str_msg", False) # True if message is only str, false includes header
-    self.cmd_pub_topic = rospy.get_param("~pub_topic", default_pub_topic)
+    self.verbose = rospy.get_param("/speech/verbose", True) # default prints out more info
+    self.str_msg = rospy.get_param(SpeechListener.COMMAND_TYPE, 'StampedString') # True if message is only str, false includes header
+    self.cmd_pub_topic = rospy.get_param(SpeechListener.COMMAND_TOPIC_PARAM, default_pub_topic)
    
     # Parameters for recognition
-    self.RECOGNITION_THRESHOLD = rospy.get_param("~rec_thresh", default_rec_thresh)
+    self.RECOGNITION_THRESHOLD = rospy.get_param("/speech/rec_thresh", default_rec_thresh)
 
     # Create a decoder with certain model
     self.config = Decoder.default_config()
@@ -99,7 +100,7 @@ class SpeechRecognizer():
       self.config.set_string('-logfn','/dev/null')
    
     # Setup the publisher 
-    if self.str_msg:
+    if self.str_msg == 'String':
       self.pub = rospy.Publisher(self.cmd_pub_topic, String, queue_size=1)
     else:
       self.pub = rospy.Publisher(self.cmd_pub_topic, StampedString, queue_size=1)
@@ -149,7 +150,7 @@ class SpeechRecognizer():
             # Get the time stamp for the message
             now = rospy.get_rostime()
             
-            if self.str_msg:
+            if self.str_msg == 'String':
               keyphrase = selectedSegment.word
             else:
               keyphrase = StampedString()
