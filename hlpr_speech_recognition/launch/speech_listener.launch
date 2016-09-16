@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+
+   <!-- Arguments that need to be passed into this launch file -->
+   <!-- This file is not intended to called on its own at any time -->
+   <arg name="yaml_list" />
+   <arg name="config_file" />
+
+   <!-- Load parameters for speech -->
+   <rosparam command="load" file="$(arg config_file)" />
+
+   <!-- Start the speech_listener node recording action server -->
+    <node name="speech_listener" pkg="hlpr_speech_recognition" type="speech_listener" respawn="false" output="screen" >
+         <rosparam param="yaml_list" subst_value="True"> [$(arg yaml_list)]</rosparam>
+    </node>
+    
+</launch>

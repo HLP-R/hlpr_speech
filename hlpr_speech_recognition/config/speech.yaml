@@ -1,0 +1,10 @@
+# Controls the speech node configuration. DO NOT CHANGE THE PARAMETER NAMES
+# The first commented value is the default per the node
+
+speech:
+    publish_topic:          'hlpr_speech_commands'          # default 'hlpr_speech_commands'
+    verbose:                true                            # default True
+    command_type:           'StampedString'                 # default StampedString (string vs. stampedstring)
+    rec_threshold:          300                             # default 300
+    service_topic:          'get_last_speech_cmd'           # default 'get_last_speech_cmd'
+     
