@@ -57,6 +57,7 @@ class SpeechListener:
   SERVICE_TOPIC_PARAM = "/speech/service_topic"
   KEYWORDS_PARAM = "/speech/keywords"
   COMMAND_TYPE = "/speech/command_type"
+  LEAVE_COMMAND = "/speech/leave_command"
 
   def __init__(self, commandBuffSize=10, init_node=True):
 
@@ -75,6 +76,7 @@ class SpeechListener:
     self.yaml_files = rospy.get_param("~yaml_list", default_yaml_files)
     self.service_topic = rospy.get_param(SpeechListener.SERVICE_TOPIC_PARAM, default_service_topic)
     self.msg_type = eval(rospy.get_param(SpeechListener.COMMAND_TYPE, 'StampedString')) # True if message is only str, false includes header
+    self.leave_command_flag = rospy.get_param(SpeechListener.LEAVE_COMMAND, False) #do we care if we the last command is old
 
     rospy.Subscriber(self.recog_topic, self.msg_type, self.callback)
 
@@ -93,6 +95,7 @@ class SpeechListener:
     # Flags for starting/stopping the node
     self.spinning = False
     self.last_command_fresh = False
+    self.last_command = None
     self.last_ts = None
     self.last_string = None
 
@@ -123,9 +126,13 @@ class SpeechListener:
 
   # This is now made a service call
   def get_last_command(self, req=None):
-    # returns a service request error
-    if not self.last_command_fresh:
-      return None
+
+    # Check if we care how "recent" the command was
+    if not self.leave_command_flag:
+
+      # returns a service request error
+      if not self.last_command_fresh:
+        return None
 
     # The command hasn't been ask for before
     self.last_command_fresh = False
