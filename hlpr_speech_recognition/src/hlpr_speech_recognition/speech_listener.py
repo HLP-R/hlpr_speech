@@ -95,6 +95,7 @@ class SpeechListener:
     # Flags for starting/stopping the node
     self.spinning = False
     self.last_command_fresh = False
+    self.last_command = None
     self.last_ts = None
     self.last_string = None
 
@@ -130,7 +131,7 @@ class SpeechListener:
     if not self.leave_command_flag:
 
       # returns a service request error
-      if self.last_command_fresh:
+      if not self.last_command_fresh:
         return None
 
     # The command hasn't been ask for before
