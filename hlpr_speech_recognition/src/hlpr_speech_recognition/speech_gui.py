@@ -44,10 +44,11 @@ import rospy
 import sys
 import rospkg
 import yaml
+import signal
 from std_msgs.msg import String
 from hlpr_speech_msgs.msg import StampedString
 from PyQt4 import QtGui, QtCore
-from .speech_listener import SpeechListener
+from hlpr_speech_recognition.speech_listener import SpeechListener
 
 class SpeechGui(QtGui.QWidget):
 
@@ -123,10 +124,16 @@ class SpeechGui(QtGui.QWidget):
         keyphrase.stamp = rospy.get_rostime()
         self.pub.publish(keyphrase)
 
+def sigint_handler(*args):
+    """Handler for the SIGINT signal."""
+    sys.stderr.write('\r')
+    QtGui.QApplication.quit()
+
 def gui_start():
+    signal.signal(signal.SIGINT, sigint_handler)
     app = QtGui.QApplication(sys.argv)
     sg = SpeechGui()
+    timer = QtCore.QTimer()
+    timer.start(500)  # You may change this if you wish.
+    timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
     sys.exit(app.exec_())
-
-
-
