@@ -73,7 +73,7 @@ before_install:
   - sudo apt-get install -y ros-$ROS_DISTRO-catkin
   # have to apt-get install rosdep or the command-line tool won't work
   - sudo apt-get install -y python-rosdep
-  - sudo apt-get install libportaudio2
+  - sudo apt-get install python-pyaudio
 
   #use pip install, because otherwise travis can't find things
   - pip install catkin-pkg
@@ -91,7 +91,7 @@ before_install:
   - rosdep update
   # Prereqs
   - sudo apt-get install -y python-dev bison swig
-  - sudo apt-get install -y espeak python-espeak python-pyaudio
+  - sudo apt-get install -y espeak python-espeak
   - sudo apt-get install -y python-pip
   - yes | sudo pip install aenum
   - wget https://sourceforge.net/projects/cmusphinx/files/sphinxbase/5prealpha/sphinxbase-5prealpha.tar.gz
