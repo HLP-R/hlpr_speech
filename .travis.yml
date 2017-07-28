@@ -81,7 +81,6 @@ before_install:
   - pip install empy
   - pip install setuptools
   - pip install aenum
-  - pip install espeak
   - pip install pyaudio
 
 
