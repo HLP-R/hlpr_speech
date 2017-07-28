@@ -48,6 +48,7 @@ language:
   - generic
 cache:
   - apt
+  - pip
 
 # Configuration variables. All variables are global now, but this can be used to
 # trigger a build matrix for different ROS distributions if desired.
@@ -58,6 +59,7 @@ env:
     - CI_SOURCE_PATH=$(pwd)
     - ROSINSTALL_FILE=$CI_SOURCE_PATH/dependencies.rosinstall
     - CATKIN_OPTIONS=$CI_SOURCE_PATH/catkin.options
+    - ROS_OS_OVERRIDE="ubuntu:14.04:trusty"
     - ROS_PARALLEL_JOBS='-j8 -l6'
 
 ################################################################################
@@ -67,14 +69,29 @@ before_install:
   - sudo sh -c "echo \"deb http://packages.ros.org/ros/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   - sudo apt-get update -qq
-  - sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-catkin
+
+  - sudo apt-get install -y ros-$ROS_DISTRO-catkin
+  # have to apt-get install rosdep or the command-line tool won't work
+  - sudo apt-get install -y python-rosdep
+  - sudo apt-get install python-pyaudio libportaudio2
+
+  #use pip install, because otherwise travis can't find things
+  - pip install catkin-pkg
+  - pip install rosdep
+  - pip install wstool
+  - pip install empy
+  - pip install setuptools
+  - pip install aenum
+  #- pip install pyaudio
+
+
   - source /opt/ros/$ROS_DISTRO/setup.bash
   # Prepare rosdep to install dependencies.
   - sudo rosdep init
   - rosdep update
   # Prereqs
   - sudo apt-get install -y python-dev bison swig
-  - sudo apt-get install -y espeak python-espeak python-pyaudio
+  - sudo apt-get install -y espeak python-espeak
   - sudo apt-get install -y python-pip
   - yes | sudo pip install aenum
   - wget https://sourceforge.net/projects/cmusphinx/files/sphinxbase/5prealpha/sphinxbase-5prealpha.tar.gz
@@ -124,7 +141,7 @@ script:
   - source /opt/ros/$ROS_DISTRO/setup.bash
   - cd ~/catkin_ws
   - catkin_make $( [ -f $CATKIN_OPTIONS ] && cat $CATKIN_OPTIONS )
-  - catkin_make install
+  - catkin_make install -DSETUPTOOLS_DEB_LAYOUT=OFF
   # Run the tests, ensuring the path is set correctly.
   - source devel/setup.bash
   - cd $CI_SOURCE_PATH
