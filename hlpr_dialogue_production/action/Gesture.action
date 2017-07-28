@@ -1,0 +1,5 @@
+string[] poses
+---
+bool success
+---
+string current_pose

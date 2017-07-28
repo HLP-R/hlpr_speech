@@ -1,0 +1,159 @@
+# Auto-generated phrase file for the dragonbot
+# Generated from files: -d ./audio_data -v Kendra script.txt
+
+test1:
+  behaviors:
+  - args: []
+    id: test
+    start: 1.152
+    type: action
+  - id: AA_AH
+    start: 0.006
+    type: viseme
+  - id: AA_AH
+    start: 0.133
+    type: viseme
+  - id: N_NG_D_Z
+    start: 0.164
+    type: viseme
+  - id: AO_AW
+    start: 0.279
+    type: viseme
+  - id: N_NG_D_Z
+    start: 0.389
+    type: viseme
+  - id: EH_AE_AY
+    start: 0.461
+    type: viseme
+  - id: R_ER
+    start: 0.587
+    type: viseme
+  - id: IDLE
+    start: 0.759
+    type: viseme
+  - id: AA_AH
+    start: 1.152
+    type: viseme
+  - id: AA_AH
+    start: 1.2
+    type: viseme
+  - id: AA_AH
+    start: 1.37
+    type: viseme
+  - id: R_ER
+    start: 1.489
+    type: viseme
+  - id: EY
+    start: 1.561
+    type: viseme
+  - id: AO_AW
+    start: 1.729
+    type: viseme
+  - id: IDLE
+    start: 1.942
+    type: viseme
+  file: /home/eshort/code/sandbox/hlpr_dialogue_production/speech/audio_data/test1.wav
+  text: '"Hello there! How are you?"'
+test2:
+  behaviors:
+  - args: []
+    id: test
+    start: 0.006
+    type: action
+  - args: []
+    id: test
+    start: 1.229
+    type: action
+  - args: []
+    id: test
+    start: 1.995
+    type: action
+  - id: N_NG_D_Z
+    start: 0.006
+    type: viseme
+  - id: EY
+    start: 0.069
+    type: viseme
+  - id: N_NG_D_Z
+    start: 0.145
+    type: viseme
+  - id: M_B_P
+    start: 0.266
+    type: viseme
+  - id: R_ER
+    start: 0.373
+    type: viseme
+  - id: EY
+    start: 0.442
+    type: viseme
+  - id: N_NG_D_Z
+    start: 0.567
+    type: viseme
+  - id: N_NG_D_Z
+    start: 0.658
+    type: viseme
+  - id: EH_AE_AY
+    start: 0.744
+    type: viseme
+  - id: N_NG_D_Z
+    start: 0.842
+    type: viseme
+  - id: N_NG_D_Z
+    start: 0.946
+    type: viseme
+  - id: N_NG_D_Z
+    start: 1.008
+    type: viseme
+  - id: N_NG_D_Z
+    start: 1.128
+    type: viseme
+  - id: AA_AH
+    start: 1.189
+    type: viseme
+  - id: N_NG_D_Z
+    start: 1.229
+    type: viseme
+  - id: AA_AH
+    start: 1.344
+    type: viseme
+  - id: M_B_P
+    start: 1.503
+    type: viseme
+  - id: EY
+    start: 1.567
+    type: viseme
+  - id: AA_AH
+    start: 1.597
+    type: viseme
+  - id: AA_AH
+    start: 1.705
+    type: viseme
+  - id: M_B_P
+    start: 1.757
+    type: viseme
+  - id: N_NG_D_Z
+    start: 1.821
+    type: viseme
+  - id: EY
+    start: 1.891
+    type: viseme
+  - id: AA_AH
+    start: 1.995
+    type: viseme
+  - id: AA_AH
+    start: 2.123
+    type: viseme
+  - id: CH_SH_ZH
+    start: 2.188
+    type: viseme
+  - id: N_NG_D_Z
+    start: 2.285
+    type: viseme
+  - id: N_NG_D_Z
+    start: 2.482
+    type: viseme
+  - id: IDLE
+    start: 2.626
+    type: viseme
+  file: /home/eshort/code/sandbox/hlpr_dialogue_production/speech/audio_data/test2.wav
+  text: '"This phrase tests the timing of the actions."'

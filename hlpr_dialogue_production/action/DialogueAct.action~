@@ -1,0 +1,5 @@
+string text_or_key
+string audio_file
+string[] 
+
+string[] active_states
