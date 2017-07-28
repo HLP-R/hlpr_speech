@@ -80,6 +80,9 @@ before_install:
   - pip install wstool
   - pip install empy
   - pip install setuptools
+  - pip install aenum
+  - pip install espeak
+  - pip install pyaudio
 
 
   - source /opt/ros/$ROS_DISTRO/setup.bash
