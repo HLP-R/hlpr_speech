@@ -30,30 +30,103 @@
 
 import rospy
 import smach
-import smach_ros
+'''import smach_ros
 import wave
 import yaml
 import threading
 import actionlib
 import contextlib
 from sound_play.libsoundplay import SoundClient
-from cordial_tts.cordial_tts import CoRDialTTS
+from cordial_tts.cordial_tts import CoRDialTTS'''
 
 class Synchronizer():
+    """ Object that can be passed to all controllers to synchronize their start
+
+    A single Synchronizer object is passed to all controllers so that the
+    speech state can signal when the audio has begun to play.  This is needed
+    because online text-to-speech has to download the audio from the internet
+    before it can begin to play, leading to a variable start time for the
+    speech audio.
+    """
+    
     def __init__(self):
+        """ Creates a Synchronizer object"""
         self.started = False
         self.time = None
 
     def start(self):
+        """ Sets the state of the Synchronizer to started and saves the time"""
         self.started = True
         self.time = rospy.Time.now()
     
     def reset(self):
+        """ Resets the state of the Synchronizer to not started"""
         self.started = False
         self.time = None
 
 class ControllerState(smach.State):
+    """ Interface to action servers controlling robot behavior
+
+    A ControllerState is a smach.State that sends requests to a specific
+    action server at the appropriate times.
+
+    .. warning:: After creating the object, you *must* call ``setup_sync`` to    provide the state with a Synchronizer. The Synchronizer is not included in    the constructor so that the object can be created in ``controllers.py`` or    elsewhere in code and passed to the SmachWrapper state, which will then set    up the Synchronizers and assemble the dialogue act state machine.
+
+    
+    **Input keys**
+        * ordered_behaviors : list of dict
+            An ordered list of all the behaviors the controller should play. A
+            behavior is a dict with keys "start", "id", and "args", indicating
+            the start time (after speech begins), name of the behavior, and any
+            arguments to the behavior, respectively.
+
+    **Outcomes**
+        * preempted
+            The behavior was preempted before playing all the behaviors in the list
+            to completion.
+        * done
+            The controller played all of the behaviors in the list.
+
+    """
     def __init__(self, name, behaviors, topic, action_type, arg_list_to_goal_cb, behavior_time_adj=None):
+        """ Constructor
+
+        Creates the ControllerState with the given name, able to handle the
+        given behaviors by sending the arguments to the arg_list_to_goal_cb
+        with a time adjustment factor of behavior_time_adj (assigned on a per-
+        behavior basis).  By convention, the name should be in all caps, and
+        must not conflict with any other names in the state machine containing
+        this state.  If using the SmachWrapper, the names "SPEECH", "START",
+        "DIALOGUE" are taken.
+
+
+        Parameters
+        ----------
+        name : str
+            The name of this state in the state machine
+        
+        behaviors : list of str
+            The behaviors (from the speech string tags) that this controller
+            can handle
+        
+        topic : str
+            The topic for the action server that this controller calls
+        
+        action_type : ROS Action Type
+            The type for the action server that this controller calls
+        
+        arg_list_to_goal_cb : function
+            A function taking the name of the behavior and a list of arguments
+            and returning a goal for the action of type ``action_type``
+        
+        behavior_time_adj : dict
+            A mapping from behavior names (from ``behaviors``) to times (in s).
+            The controller will send the action goal that much earlier.
+            Negative values will cause the controller to call the action
+            server later.
+        
+        """
+        
         smach.State.__init__(self,outcomes=["preempted","done"],
                              input_keys=["ordered_behaviors"])
         self.name = name
@@ -67,6 +140,19 @@ class ControllerState(smach.State):
             self._time_adj = {}
 
     def setup_sync(self,synchronizer):
+        """ Provides the controller with a Synchronizer object
+
+        This provides the controller with information about when the speech
+        audio has begun.  This will only work if the controller and speech
+        state share the same Synchronizer object.
+
+        Parameters
+        ----------
+        synchronizer : Synchronizer
+           A synchronizer object.  All controllers, including the speech state,
+           should share the same synchronizer.
+        
+        """
         self._sync=synchronizer
 
     def execute(self,userdata):
@@ -114,7 +200,43 @@ class ControllerState(smach.State):
         return "done"
 
 class TTSSpeechStart(smach.State):
+    """ Speech prep state when using TTS
+
+    State to process marked text to ordered behaviors, unmarked text, and an
+    empty wav_file, that can be passed on to the Speech state.
+
+
+    **Input keys**
+        * marked_text : str
+            Text marked up with <behavior tags>.  Behaviors will be synced to
+            the word following the tag.
+
+    **Output keys**
+        * text : str
+            Text marked up with <behavior tags>.  Behaviors will be synced to
+            the word following the tag.
+        * ordered_behaviors : list of dict
+            A list of behavior dictionaries.  A behavior has the keys "id",
+            "start", and "args". Ordered by start time.
+        * wav_file : str
+            Always None
+
+    **Outcomes**
+        * done
+            Finished fetching behaviors
+
+    """
     def __init__(self,voice="Kimberly"):
+        """ Constructor
+
+        Initializes TTS for speech using Amazon Polly with the given voice
+
+        Parameters
+        -----------
+        voice : str, optional
+            Which Amazon Polly voice to use. Defaults to Kimberly
+        """
+        
         smach.State.__init__(self,outcomes=["done"],
                              input_keys=["marked_text"],
                              output_keys=["text","ordered_behaviors","wav_file"])
@@ -129,7 +251,50 @@ class TTSSpeechStart(smach.State):
         return "done"
 
 class TTSFallbackSpeechStart(smach.State):
+    """ Speech prep from file with online TTS fallback
+
+    State to read text, wave file, and ordered behaviors from a phrase file,
+    given a key into that file. If the key isn't found, uses online TTS using
+    Amazon Polly.  This is useful for debugging or if there are a small number
+    of phrases that can't be known in advance.
+
+    **Input keys**
+        * key_or_marked_text : str
+            Either a key into the phrase file or text marked up with
+            <behavior tags>.  The state tries to read from the phrase file
+            with this string.  If it's not found, assume it is marked up text
+            and generate the audio with TTS
+
+    **Output keys**
+        * text : str
+            Text marked up with <behavior tags>.  Behaviors will be synced to
+            the word following the tag.
+        * ordered_behaviors : list of dict
+            A list of behavior dictionaries.  A behavior has the keys "id",
+            "start", and "args". Ordered by start time.
+        * wav_file : str
+            None if the audio needs to be fetched, otherwise the path to the
+            audio file.
+
+    **Outcomes**
+        * done
+            Finished fetching behaviors
+    
+    """
     def __init__(self, phrases, voice="Kimberly"):
+        """ Constructor
+
+        Initializes TTS for speech using Amazon Polly with the given voice, and
+        reads in the phrase file.
+
+        Parameters
+        -----------
+        voice : str, optional
+            Which Amazon Polly voice to use. Defaults to Kimberly
+
+        phrases : str
+            Path to the phrase file to use.
+        """
         smach.State.__init__(self,outcomes=["done"],
                              input_keys=["key_or_marked_text"],
                              output_keys=["text","ordered_behaviors","wav_file"])
@@ -180,7 +345,43 @@ class DebugSpeechStart(smach.State):
 
 
 class FileSpeechStart(smach.State):
+    """ Speech prep from file
+
+    State to read text, wave file, and ordered behaviors from a phrase file,
+    given a key into that file.
+
+    **Input keys**
+        * key : str
+            A key into the phrase file
+
+    **Output keys**
+        * text : str
+            If the text is included in the phrase file, the text, otherwise
+            None
+        * ordered_behaviors : list of dict
+            A list of behavior dictionaries.  A behavior has the keys "id",
+            "start", and "args".  Ordered by start time.
+        * wav_file : str
+            The path to the audio file.
+
+    **Outcomes**
+        * done
+            Finished fetching behaviors
+        * not_found
+            Unable to find the key in the phrase file
+    
+    """
     def __init__(self, phrases):
+        """ Constructor
+
+        Initializes TTS for speech using a phrase file.
+
+        Parameters
+        -----------
+
+        phrases : str
+            Path to the phrase file to use.
+        """
         smach.State.__init__(self,outcomes=["done","not_found"],
                              input_keys=["key"],
                              output_keys=["text","ordered_behaviors","wav_file"])
@@ -203,7 +404,40 @@ class FileSpeechStart(smach.State):
         return "done"
 
 class NoPrepSpeechStart(smach.State):
+    """ Pass through speech info without prep
+
+    State for the case where the dialogue state machine will be given text,
+    behaviors (not necessarily ordered), and a path to a wave file in
+    the userdata.
+
+    **Input keys**
+        * behaviors : list of dict
+             A list of behavior dictionaries.  A behavior has the keys "id",
+            "start", and "args".
+        * wav_file_loc : str
+             The path to the audio file to play
+
+    **Output keys**
+        * text : str
+            Always None
+        * ordered_behaviors : list of dict
+            A list of behavior dictionaries.  A behavior has the keys "id",
+            "start", and "args". Ordered by start time.
+        * wav_file : str
+            The path to the audio file.
+
+    **Outcomes**
+        * done
+            Finished fetching behaviors
+        * missing_info
+            Missing information in the input keys
+    
+    """
     def __init__(self):
+        """ Constructor
+
+        Initializes passthrough state for speech features.
+        """
         smach.State.__init__(self,outcomes=["done","missing_info"],
                              input_keys=["behaviors","wav_file_loc"],
                              output_keys=["text","ordered_behaviors","wav_file"])
@@ -233,7 +467,55 @@ class SpeechDebugState(smach.State):
         return "done"
 
 class SpeechState(smach.State):
+    """ Speech player state
+
+    Takes in text and/or a wave file.  Given a wave file, plays the file.
+    If no wave file is provided and text-to-speech is on, fetch the audio from
+    Amazon Polly and play the audio.  If no wave file is provided and text-to-
+    speech is off, return "no_audio"
+
+    **Input keys**
+        * text : str
+            Can be None; the text version of the robot's speech.  Used to print
+            to the screen.
+        * ordered_behaviors : list of dict
+            A list of behavior dictionaries.  A behavior has the keys "id",
+            "start", and "args".  Ordered by start time.
+        * wav_file : str
+            Can be None if TTS is on. The path to the audio file.
+
+    **Outcomes**
+        * done
+            Finished fetching behaviors
+        * no_audio
+            Couldn't find the wave file, or no wave file provided and TTS
+            turned off
+        * preempted
+            State was preempted before audio finished playing.  If preempted,
+            will try to stop the audio.
+
+    """
     def __init__(self, use_tts, synchronizer, phrases=None, voice="Kimberly"):
+        """ Constructor
+
+        Initializes the speech state with the desired parameters; either with
+        or without online TTS, and with or without a pre-generated phrase
+        file.
+
+        Parameters
+        -----------
+        use_tts : bool
+            If true, allow online TTS
+        synchronizer : Synchronizer
+            Synchronizer object to allow sync of speech and behaviors.  Should
+            be the same object as is passed to behavior ControllerState objects
+            with ``setup_sync``
+        voice : str, optional
+            Which Amazon Polly voice to use. Defaults to Kimberly
+
+        phrases : str, optional
+            Path to the phrase file to use. If None, require online TTS.
+        """
         smach.State.__init__(self,outcomes=["preempted","no_audio","done"],
                              input_keys=["text","wav_file"])
         self._tts = use_tts
