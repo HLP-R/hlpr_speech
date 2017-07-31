@@ -70,6 +70,10 @@ class ControllerState(smach.State):
         self._sync=synchronizer
 
     def execute(self,userdata):
+        if userdata.ordered_behaviors==None:
+            rospy.logwarn("Controller {} got empty behavior list".format(self.name))
+            return "done"
+
         ordered_behaviors = filter(lambda b: b["id"] in self._can_handle,
                                           userdata.ordered_behaviors)
 
@@ -150,6 +154,31 @@ class TTSFallbackSpeechStart(smach.State):
         userdata.wav_file = wav_file
         return "done"
 
+class DebugSpeechStart(smach.State):
+    def __init__(self):
+        smach.State.__init__(self,outcomes=["done"],
+                             input_keys=["key_or_marked_text", "behaviors", 
+                                         "wav_file_loc"],
+                             output_keys=["text","ordered_behaviors","wav_file"])
+
+    def execute(self,userdata):
+        if userdata.behaviors != None:
+            userdata.ordered_behaviors = sorted(userdata.behaviors,key = lambda b: b["start"])
+        else:
+            userdata.ordered_behaviors = userdata.behaviors
+        userdata.text = userdata.key_or_marked_text
+        userdata.wav_file = userdata.wav_file_loc
+
+               
+        rospy.logwarn("Speech debug info:")
+        rospy.logwarn("Ordered Behaviors: {}".format(userdata.behaviors))
+        rospy.logwarn("Text: {}".format(userdata.key_or_marked_text))
+        rospy.logwarn("Wave file: {}".format(userdata.wav_file_loc))
+
+        return "done"
+
+
+
 class FileSpeechStart(smach.State):
     def __init__(self, phrases):
         smach.State.__init__(self,outcomes=["done","not_found"],
@@ -187,13 +216,21 @@ class NoPrepSpeechStart(smach.State):
         behaviors = userdata.behaviors
         text = None
         wav_file = userdata.wav_file
-
+        
         userdata.ordered_behaviors = sorted(behaviors,key = lambda b: b["start"])
         userdata.text = text
         userdata.wav_file = wav_file
+ 
         return "done"
 
-       
+class SpeechDebugState(smach.State):
+    def __init__(self, synchronizer):
+        smach.State.__init__(self,outcomes=["preempted","no_audio","done"],
+                             input_keys=["text","wav_file"])
+        self._sync = synchronizer
+
+    def execute(self,userdata):
+        return "done"
 
 class SpeechState(smach.State):
     def __init__(self, use_tts, synchronizer, phrases=None, voice="Kimberly"):
@@ -233,8 +270,11 @@ class SpeechState(smach.State):
         return "done"
 
 class SmachWrapper():
-    def __init__(self, use_tts, phrases=None, controllers=None, voice="Kimberly"):
-        if use_tts and phrases!=None:
+    def __init__(self, use_tts, phrases=None, controllers=None, voice="Kimberly",debug=False):
+        if debug:
+            condition="debug"
+            outcomes=["preempted","done"]
+        elif use_tts and phrases!=None:
             condition = "tts_fallback"
             outcomes = ["preempted","done"]
             #input_keys = ["key_or_marked_text"]
@@ -260,6 +300,10 @@ class SmachWrapper():
 
 
         def cc_child_term_cb(outcome_map):
+            if condition=="debug":
+                if "SPEECH" in outcome_map:
+                    return True
+            
             others = []
             for name, outcome in outcome_map.items():
                 others.append(outcome)
@@ -283,9 +327,14 @@ class SmachWrapper():
         
 
         with self._cc:
-            smach.Concurrence.add("SPEECH", SpeechState(use_tts, self._sync, phrases,voice),
+            if condition=="debug":
+                smach.Concurrence.add("SPEECH", SpeechDebugState(self._sync),
                             remapping={"text":"text",
                                        "wav_file":"wav_file"})
+            else:
+                smach.Concurrence.add("SPEECH", SpeechState(use_tts, self._sync, phrases,voice),
+                                      remapping={"text":"text",
+                                                 "wav_file":"wav_file"})
             if controllers != None:
                 for c in controllers:
                     c.setup_sync(self._sync)
@@ -295,7 +344,15 @@ class SmachWrapper():
                 
 
         with self._sm:
-            if condition=="tts_fallback":
+            if condition=="debug":
+                smach.StateMachine.add("START",DebugSpeechStart(),
+                                       transitions={"done":"DIALOGUE"},
+                                       remapping={"key_or_marked_text":"key_or_marked_text",
+                                                  "text":"text",
+                                                  "wav_file_loc":"wav_file_loc",
+                                                  "ordered_behaviors":"ordered_behaviors",
+                                                  "wav_file":"wav_file"})
+            elif condition=="tts_fallback":
                 smach.StateMachine.add("START",TTSFallbackSpeechStart(phrases),
                                        transitions={"done":"DIALOGUE"},
                                        remapping={"key_or_marked_text":"key_or_marked_text",
