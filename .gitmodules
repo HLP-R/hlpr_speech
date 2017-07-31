@@ -1,0 +1,3 @@
+[submodule "hlpr_speech/cordial-public"]
+	path = hlpr_speech/cordial-public
+	url = git@github.com:interaction-lab/cordial-public.git
