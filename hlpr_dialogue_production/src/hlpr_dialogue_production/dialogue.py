@@ -320,6 +320,34 @@ class TTSFallbackSpeechStart(smach.State):
         return "done"
 
 class DebugSpeechStart(smach.State):
+    """ Debugging speech state with no audio
+
+    Prints the values of the provided userdata, allowing for debugging.  Doesn't
+    actually play any sound.
+
+    **Input keys**
+        * behaviors : list of dict
+             A list of behavior dictionaries.  A behavior has the keys "id",
+            "start", and "args".
+        * wav_file_loc : str
+             The path to the audio file to play
+        * key_or_marked_text : str
+            Either a key into the phrase file or text marked up with
+            <behavior tags>.  
+
+    **Output keys**
+        * text : str
+            Text marked up with <behavior tags>.  Behaviors will be synced to
+            the word following the tag.
+        * ordered_behaviors : list of dict
+            A list of behavior dictionaries.  A behavior has the keys "id",
+            "start", and "args". Ordered by start time.
+        * wav_file : str
+            None if the audio needs to be fetched, otherwise the path to the
+            audio file.
+
+    """
+
     def __init__(self):
         smach.State.__init__(self,outcomes=["done"],
                              input_keys=["key_or_marked_text", "behaviors", 
@@ -458,7 +486,32 @@ class NoPrepSpeechStart(smach.State):
         return "done"
 
 class SpeechDebugState(smach.State):
+    """ Speech debug state
+    
+    Doesn't do anything, allowing for debugging of speech input without
+    requiring tts or audio files.
+
+    **Input keys**
+        * text : str
+            Can be None; the text version of the robot's speech.  Used to print
+            to the screen.
+        * wav_file : str
+            Can be None if TTS is on. The path to the audio file.
+
+    **Outcomes**
+        * done
+            Finished fetching behaviors. Always returns this.
+        * no_audio
+            Couldn't find the wave file, or no wave file provided and TTS
+            turned off. Never returns this.
+        * preempted
+            State was preempted before audio finished playing.  If preempted,
+            will try to stop the audio. Never returns this.
+
+
+    """
     def __init__(self, synchronizer):
+        
         smach.State.__init__(self,outcomes=["preempted","no_audio","done"],
                              input_keys=["text","wav_file"])
         self._sync = synchronizer
@@ -478,9 +531,6 @@ class SpeechState(smach.State):
         * text : str
             Can be None; the text version of the robot's speech.  Used to print
             to the screen.
-        * ordered_behaviors : list of dict
-            A list of behavior dictionaries.  A behavior has the keys "id",
-            "start", and "args".  Ordered by start time.
         * wav_file : str
             Can be None if TTS is on. The path to the audio file.
 
@@ -552,7 +602,74 @@ class SpeechState(smach.State):
         return "done"
 
 class SmachWrapper():
+    """ SmachWrapper to set up dialogue state machine 
+
+    Given a set of controllers, this class will put together a state machine
+    that allows simultaneous speech and behaviors.  You can either run the
+    state machine by calling ``standalone_start`` with the appropriate userdata,
+    or you can call ``get_sm`` to get a reference to the internal state machine
+    and use it as a state in a larger smach state machine.  The input keys and
+    outcomes of the state machine depend on the options passed to the 
+    constructor; they may include:
+
+    **Input keys**
+        * key_or_marked_text : str
+            If a phrase file is provided and use_tts is true, or debug is true,
+            provides either a key into the phrase file or marked-up text to say
+            with online TTS
+        * key : str
+            If a phrase file is provided and use_tts is false, provides a key
+            into the phrase file.
+        * marked_text : str
+            If no phrase file is provided and use_tts is true, contains
+            marked-up text to say with online TTS
+        * behaviors : list of dict
+            If no phrase file is provided and use_tts is false, or debug is true
+            directly provides the behaviors for the robot to execute.  A 
+            behavior has the keys "id", "start", and "args".
+        * wav_file_loc : list of dict
+            If no phrase file is provided and use_tts is false, or debug is true
+            directly provides a path to an audio file for the robot to play
+
+    **Outcomes**
+        * done
+            Successfully played the dialogue act. This is always a potential
+            outcome of the state machine.
+        * preempted
+            The state machine was preempted.  This is always a potential outcome
+            of the state machine.
+        * not_found
+            If not using tts, indicates that the key was not found in the phrase
+            file
+        * missing_info
+            If neither using tts nor a phrase file, indicates that the robot was
+            not provided with behaviors and an audio file in the input userdata
+
+    """
     def __init__(self, use_tts, phrases=None, controllers=None, voice="Kimberly",debug=False):
+        """ Constructor
+        
+        Creates a state machine according to the provided options.
+
+        Parameters
+        -----------
+        use_tts : bool
+            Whether or not to use online TTS from Amazon Polly
+
+        phrases : str, optional
+            Path to the phrase file to use. Defaults to None.
+
+        controllers : list of ControllerState, optional
+            The set of controllers to use for speech.  If not provided, the
+            state machine will play audio but no behaviors.
+
+        voice : str, optional
+            Which Amazon Polly voice to use. Defaults to Kimberly
+
+        debug : bool, optional
+            If true, start in debug mode, with no audio or behaviors.  Defaults
+            to false.
+        """
         if debug:
             condition="debug"
             outcomes=["preempted","done"]
@@ -673,6 +790,16 @@ class SmachWrapper():
                                               "ordered_behaviors":"ordered_behaviors",
                                               "text":"text"})
     def get_sm(self):
+        """ Returns the state machine
+        
+        .. warning:: Trying to run the state machine multiple times can have unexpected results.  If you need to run it multiple times in various places in your code, use the ``standalone_start`` function.
+
+        Returns
+        ---------
+        smach.StateMachine
+            A reference to the state machine constructed by this object.
+
+        """
         return self._sm
 
     def _service_preempt_for_children(self,sm):
@@ -684,29 +811,85 @@ class SmachWrapper():
         except AttributeError:
             return
 
-    def standalone_start(self):
+    def standalone_start(self, userdata_dict={}):
+        """ Runs the state machine on its own.
+
+        This function resets all states in the state machine, sets the
+        userdata using the provided dictionary (be sure it matches the
+        input_keys for the options you have selected), and runs the state
+        machine.
+
+        Parameters
+        -----------
+        userdata_dict : dict
+            A dictionary of values to update the userdata.  Which values need
+            to be included depends on the options you provided when creating
+            this object.
+        """
         self.reset()
+        userdata = smach.UserData()
+        for key in userdata_dict:
+            userdata[key]=userdata_dict[key]
+        self._s.get_sm().set_initial_state(["START"],userdata=userdata)
         self._t = threading.Thread(target=self._sm.execute)
         self._t.start()
 
     def reset(self):
+        """ Reset the state machine
+
+        Resets preemption in the state machine and resets the synchronizer.
+
+        """
         self._sync.reset()
         self._service_preempt_for_children(self._sm)
         self._outcome=None
 
     def get_outcome(self):
+        """ Returns the outcome of the state machine.
+        
+        After the state machine has run to completion, this will return the
+        outcome.
+
+        Returns
+        -------
+        str
+           The outcome of the state machine.
+
+        """
         return self._outcome
 
     def preempt(self):
-        #self.preempter.preempt()
+        """ Preempt the state machine.
+
+        Useful in the case where the state machine is running inside an action
+        server
+        """
         self._sm.request_preempt()
         self._t.join()
 
     def is_running(self):
+        """ Returns whether the state machine is currently running
+
+        Returns
+        --------
+        bool
+            Whether or not the state machine is currently running
+        """
         return self._t.isAlive()
 
     def get_active_states(self):
+        """ Returns the currently-active states
+
+        If the machine is running, returns all currently-active states.
+        Otherwise, returns None
+
+        Returns
+        -------
+        list of str
+            The names of the currently-active states
+        """
         if self._sm.is_running():
             return self._sm.get_active_states()
         else:
             return None
+        

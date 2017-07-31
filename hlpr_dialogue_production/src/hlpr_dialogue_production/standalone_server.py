@@ -39,7 +39,7 @@ import hlpr_dialogue_production.controllers as controller_gen
 import hlpr_dialogue_production.msg as dialogue_msgs
 
 class HLPRDialogueAction():
-    def __init__(self, use_tts, phrase_file=None, voice="Kimberly"):
+    def __init__(self, use_tts, phrase_file=None, voice="Kimberly", debug=False):
         self._as = actionlib.SimpleActionServer("HLPR_Dialogue", dialogue_msgs.DialogueActAction, execute_cb=self.execute_cb, auto_start=False)
         self._use_tts = use_tts
 
@@ -50,9 +50,11 @@ class HLPRDialogueAction():
         else:
             self._phrases=None
 
-        self._s = SmachWrapper(self._use_tts,self._phrases,self._setup_controllers(),voice)
+        self._s = SmachWrapper(self._use_tts,self._phrases,self._setup_controllers(),voice,debug)
 
-        if use_tts and phrase_file!=None:
+        if debug:
+            self._condition = "debug"
+        elif use_tts and phrase_file!=None:
             self._condition = "tts_fallback"
         elif use_tts:
             self._condition = "tts_only"
@@ -75,8 +77,12 @@ class HLPRDialogueAction():
         return controllers
 
     def execute_cb(self,goal):
-        userdata = smach.UserData()
-        if self._condition=="tts_fallback":
+        userdata = {}
+        if self._condition=="debug":
+            userdata["key_or_marked_text"]=goal.text_or_key
+            userdata["behaviors"]=yaml.load(goal.behavior_yaml)
+            userdata["wav_file_loc"]=goal.audio_file
+        elif self._condition=="tts_fallback":
             userdata["key_or_marked_text"]=goal.text_or_key
         elif self._condition=="tts_only":
             userdata["marked_text"]=goal.text_or_key
@@ -86,8 +92,7 @@ class HLPRDialogueAction():
             userdata["behaviors"]=yaml.load(goal.behavior_yaml)
             userdata["wav_file_loc"]=goal.audio_file
 
-        self._s.get_sm().set_initial_state(["START"],userdata=userdata)
-        self._s.standalone_start()
+        self._s.standalone_start(userdata)
         success=True
         while self._s.is_running():
             if self._as.is_preempt_requested():
@@ -114,9 +119,10 @@ if __name__=="__main__":
     parser.add_argument('-v', '--voice', help="Which voice to use with TTS. Child Voices: Ivy, Justin; Adult Voices: Salli, Joey, Kimberly, Kendra, Eric, Jennifer; Silly Voices: Chipmunk", default="Kimberly")
     parser.add_argument('-t', '--use-tts', help="Enable text-to-speech (online)", action='store_true')
     parser.add_argument('-p', '--phrase-file', help="Phrase file for pre-generated speech", nargs="?", default=None)
+    parser.add_argument('-d', '--debug', help="Use debug mode. THIS WILL OVERRIDE -v, -t, AND -p FLAGS!", action='store_true')
 
     args = parser.parse_known_args()[0]
 
 
-    server = HLPRDialogueAction(args.use_tts,args.phrase_file,args.voice)
+    server = HLPRDialogueAction(args.use_tts,args.phrase_file,args.voice, args.debug)
     server.spin()
