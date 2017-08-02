@@ -43,16 +43,16 @@ import smach_ros
 import actionlib
 import random
 
-#from geometry_msgs.msg import TransformStamped, Transform, Vector3, Quaternion
-#from std_msgs.msg import Header
-#import hlpr_dialogue_production.msg as dialogue_msgs
+from geometry_msgs.msg import TransformStamped, Transform, Vector3, Quaternion
+from std_msgs.msg import Header
+import hlpr_dialogue_production.msg as dialogue_msgs
 
 
-#from hlpr_dialogue_production.dialogue import ControllerState
-#import hlpr_lookat.msg
+from hlpr_dialogue_production.dialogue import ControllerState
+import hlpr_lookat.msg
 
 
-#import actionlib_tutorials.msg
+import actionlib_tutorials.msg
 
 
 def lookat_controller_cb(behavior_name, string_args):

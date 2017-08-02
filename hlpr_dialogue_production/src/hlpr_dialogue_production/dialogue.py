@@ -30,14 +30,14 @@
 
 import rospy
 import smach
-'''import smach_ros
+import smach_ros
 import wave
 import yaml
 import threading
 import actionlib
 import contextlib
 from sound_play.libsoundplay import SoundClient
-from cordial_tts.cordial_tts import CoRDialTTS'''
+from cordial_tts.cordial_tts import CoRDialTTS
 
 class Synchronizer():
     """ Object that can be passed to all controllers to synchronize their start
