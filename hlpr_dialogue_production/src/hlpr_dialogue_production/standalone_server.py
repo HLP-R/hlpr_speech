@@ -70,9 +70,10 @@ class HLPRDialogueAction():
         
     def _setup_controllers(self):
         controllers=[]
-        controllers=[controller_gen.get_test_controller(),
-                     controller_gen.get_lookat_controller(),
-                     controller_gen.get_gesture_controller(),
+        controllers=[
+            controller_gen.get_test_controller(),
+            #controller_gen.get_lookat_controller(),
+            controller_gen.get_gesture_controller(),
                     ]
         return controllers
 

@@ -830,7 +830,7 @@ class SmachWrapper():
         userdata = smach.UserData()
         for key in userdata_dict:
             userdata[key]=userdata_dict[key]
-        self._s.get_sm().set_initial_state(["START"],userdata=userdata)
+        self._sm.set_initial_state(["START"],userdata=userdata)
         self._t = threading.Thread(target=self._sm.execute)
         self._t.start()
 
