@@ -47,6 +47,7 @@ from geometry_msgs.msg import TransformStamped, Transform, Vector3, Quaternion
 from std_msgs.msg import Header
 import hlpr_dialogue_production.msg as dialogue_msgs
 import hlpr_record_demonstration.msg as record_msgs
+import hlpr_lookat.msg as lookat_msgs
 import hlpr_lookat.msg
 
 
@@ -158,7 +159,7 @@ def get_keyframe_playback_controller():
     time_adj = None
     return ControllerState("KEYFRAME_PLAYBACK_CONTROLLER",behaviors, 
                            "/lookat_waypoints_action_server",
-                           record_msgs.LookatWaypointsAction,
+                           lookat_msgs.LookatWaypointsAction,
                            keyframe_playback_controller_cb,time_adj)
 
 def gesture_controller_cb(behavior_name, string_args):
