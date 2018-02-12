@@ -33,6 +33,7 @@ import smach
 import smach_ros
 import actionlib
 import hlpr_dialogue_production.msg as dialogue_msgs
+import sys
 
 
 if __name__ == "__main__":
@@ -40,6 +41,9 @@ if __name__ == "__main__":
     client = actionlib.SimpleActionClient("HLPR_Dialogue",dialogue_msgs.DialogueActAction)
     client.wait_for_server()
     #client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key="<shrug>I'm not sure what's going on. I'm going to <test>keep talking though, because I need to give the gesture <lookat right_ee_link 0.0 0.0 1.0>time to complete."))
-    client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key="<shrug>Hi there."))
+    text_or_key = "Hello world"
+    if len(sys.argv) > 1:
+      text_or_key = sys.argv[1]
+    client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key=text_or_key))
     client.wait_for_result()
     print client.get_result()
