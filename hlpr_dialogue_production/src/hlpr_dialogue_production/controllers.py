@@ -46,12 +46,11 @@ import random
 from geometry_msgs.msg import TransformStamped, Transform, Vector3, Quaternion
 from std_msgs.msg import Header
 import hlpr_dialogue_production.msg as dialogue_msgs
-
-
-from hlpr_dialogue_production.dialogue import ControllerState
+import hlpr_record_demonstration.msg as record_msgs
 import hlpr_lookat.msg
 
 
+from hlpr_dialogue_production.dialogue import ControllerState
 import actionlib_tutorials.msg
 
 
@@ -119,6 +118,49 @@ def get_lookat_controller():
                            hlpr_lookat.msg.LookatWaypointsAction,
                            lookat_controller_cb,time_adj)
 
+
+
+def keyframe_playback_controller_cb(behavior_name, string_args):
+    """Callback to create a PlaybackKeyframeDemoGoal from string arguments
+    
+    Given the name of a trajectory, looks up the file associated with the
+    name and packs it into a goal for the hlpr_kinesthetic_teaching playback
+    server.
+
+    Parameters
+    ----------
+    behavior_name : str
+        The name of the behavior being handled
+    string_args : list of str
+        The arguments that were parsed from the speech string, as strings
+        (not used)
+
+    Returns
+    -------
+    PlaybackKeyframeDemoGoal
+        Goal containing the location of the pickle file to play back
+
+    """
+
+    pickle_locations={"turn_cup":"/home/eshort/robot_movements/rot_90_deg_joint.pkl",
+                      "wave":"/home/eshort/robot_movements/rot_90_deg_joint.pkl"}
+
+    return record_msgs.PlaybackKeyframeDemoGoal(bag_file_name=pickle_locations[behavior_name])
+
+def get_keyframe_playback_controller():
+    """ Sets up the keyframe playback controller state
+
+    Sets up the keyframe playback controller to connect to the
+    playback_demonstration_action_server action server in hlpr_record_demonstration.
+
+    """
+    behaviors=["wave","turn_cup"]
+    time_adj = None
+    return ControllerState("KEYFRAME_PLAYBACK_CONTROLLER",behaviors, 
+                           "/lookat_waypoints_action_server",
+                           record_msgs.LookatWaypointsAction,
+                           keyframe_playback_controller_cb,time_adj)
+
 def gesture_controller_cb(behavior_name, string_args):
     """Callback to create a GestureGoal from string arguments
     
@@ -131,8 +173,7 @@ def gesture_controller_cb(behavior_name, string_args):
     Parameters
     ----------
     behavior_name : str
-        The name of the behavior being handled (right now, this will always
-        be "lookat")
+        The name of the behavior being handled
     string_args : list of str
         The arguments that were parsed from the speech string, as strings
 
