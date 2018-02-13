@@ -42,6 +42,7 @@ import smach
 import smach_ros
 import actionlib
 import random
+import os
 
 from geometry_msgs.msg import TransformStamped, Transform, Vector3, Quaternion
 from std_msgs.msg import Header
@@ -142,11 +143,31 @@ def keyframe_playback_controller_cb(behavior_name, string_args):
         Goal containing the location of the pickle file to play back
 
     """
+    rospy.loginfo("Got keyframe controller callback")
 
     pickle_locations={"turn_cup":"/home/eshort/robot_movements/rot_90_deg_joint.pkl",
                       "wave":"/home/eshort/robot_movements/rot_90_deg_joint.pkl"}
+    filename = ""
 
-    return record_msgs.PlaybackKeyframeDemoGoal(bag_file_name=pickle_locations[behavior_name])
+    home_path = os.path.expanduser("~") + "/robot_movements/" + string_args[0] + ".pkl"
+
+    if string_args[0] in pickle_locations:
+        filename = pickle_locations[string_args[0]]
+    elif os.path.exists(string_args[0]):
+        filename = string_args[0]
+    elif os.path.exists(home_path):
+        filename = home_path
+    else:
+        pass
+
+    if filename == "":
+        rospy.logerr("could not find file for the behavior specified as '" + string_args[0] + "'")
+        rospy.logerr("I looked in the following locations:")
+        looked_in = pickle_locations.values() + [string_args[0], home_path]
+        rospy.logerr(str(looked_in))
+    else:
+        rospy.loginfo("loading behavior from file " + filename)
+    return record_msgs.PlaybackKeyframeDemoGoal(bag_file_name=filename)
 
 def get_keyframe_playback_controller():
     """ Sets up the keyframe playback controller state
@@ -155,11 +176,11 @@ def get_keyframe_playback_controller():
     playback_demonstration_action_server action server in hlpr_record_demonstration.
 
     """
-    behaviors=["wave","turn_cup"]
+    behaviors=["keyframe"]
     time_adj = None
     return ControllerState("KEYFRAME_PLAYBACK_CONTROLLER",behaviors, 
-                           "/lookat_waypoints_action_server",
-                           lookat_msgs.LookatWaypointsAction,
+                           "/playback_keyframe_demo",
+                           record_msgs.PlaybackKeyframeDemoAction,
                            keyframe_playback_controller_cb,time_adj)
 
 def gesture_controller_cb(behavior_name, string_args):
