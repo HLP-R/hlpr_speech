@@ -1,12 +1,14 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="debug" default="false"/>
-  <arg name="gesture" default="true"/>
-  <arg name="voice" default="Kimberly"/>
+  <arg name="gesture" default="false"/>
+  <arg name="visemes" default="true"/>
+  <arg name="voice" default="Justin"/>
 
   <node name="test_beep_controller" pkg="hlpr_dialogue_production" type="test_action_server.py"/>
   <node name="soundplay_node" pkg="sound_play" type="soundplay_node.py"/>
   <node if="$(arg gesture)" name="gesture_controller" pkg="hlpr_dialogue_production" type="gesture_action_server.py"/>
+  <node if="$(arg visemes)" name="viseme_controller" pkg="hlpr_dialogue_production" type="viseme_action_server.py"/>
   <group unless="$(arg debug)">
     <!-- NOTE: can also pass -p to this command, not currently supported in the launch file.
          TODO(kukanani): add ROS parameter system so that -t, -p, -d can be passed independently without needing launch file hijinx -->

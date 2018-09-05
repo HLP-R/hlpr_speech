@@ -72,9 +72,10 @@ class HLPRDialogueAction():
         controllers=[]
         controllers=[
             controller_gen.get_test_controller(),
-            controller_gen.get_lookat_controller(),
+            #controller_gen.get_lookat_controller(),
             #controller_gen.get_gesture_controller(),
             controller_gen.get_keyframe_playback_controller(),
+            controller_gen.get_viseme_controller(),
                     ]
         return controllers
 
