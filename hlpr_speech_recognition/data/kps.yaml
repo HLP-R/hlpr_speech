@@ -1,5 +1,5 @@
 tag: "GREETING"
-speech: ["HELLO POLI!"]
+speech: ["HELLO AVA!"]
 ---
 tag: "HEAR_CHECK"
 speech: ["CAN YOU HEAR ME?"]
@@ -7,26 +7,20 @@ speech: ["CAN YOU HEAR ME?"]
 tag: "SMALL_TALK"
 speech: ["HOW ARE YOU TODAY?"]
 ---
-tag: "START_EXP"
-speech: ["LET'S BEGIN THE EXPERIMENT"]
+tag: "ASSIST_AGREE"
+speech: ["I WILL HELP"]
 ---
-tag: "OPEN_HAND"
-speech: ["OPEN YOUR HAND"]
+tag: "ASSIST_DISAGREE"
+speech: ["I WILL NOT HELP"]
 ---
-tag: "CLOSE_HAND"
-speech: ["CLOSE YOUR HAND"]
+tag: "RESUME_CURRENT"
+speech: ["RETRY FAILED ACTION"]
 ---
-tag: "START_GC"
-speech: ["RELEASE YOUR ARM"]
+tag: "RESUME_NEXT"
+speech: ["CONTINUE TO NEXT ACTION"]
 ---
-tag: "END_GC"
-speech: ["HOLD YOUR ARM"]
+tag: "RESUME_RETRY"
+speech: ["RESTART TASK"]
 ---
-tag: "KEYFRAME_START"
-speech: ["START HERE","BEGIN HERE"]
----
-tag: "KEYFRAME_END"
-speech: ["END HERE","FINISH HERE"]
----
-tag: "KEYFRAME"
-speech: ["GO HERE"]
+tag: "RESUME_NONE"
+speech: ["STOP EXECUTING"]
