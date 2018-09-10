@@ -31,11 +31,13 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# A script to use pocketsphinx's "keyphrase spotting" feature with 
+# A script to use pocketsphinx's "keyphrase spotting" feature with
 # python and ros. Note that it
 #
-# Authors: Baris Akgun 
+# Authors: Baris Akgun
 # Edited: Vivian Chu, 8-29-16: rosparam config values
+
+from __future__ import print_function
 
 import rospy
 from std_msgs.msg import String
@@ -76,7 +78,7 @@ class SpeechRecognizer():
     self.verbose = rospy.get_param("/speech/verbose", True) # default prints out more info
     self.str_msg = rospy.get_param(SpeechListener.COMMAND_TYPE, 'StampedString') # True if message is only str, false includes header
     self.cmd_pub_topic = rospy.get_param(SpeechListener.COMMAND_TOPIC_PARAM, default_pub_topic)
-   
+
     # Parameters for recognition
     self.RECOGNITION_THRESHOLD = rospy.get_param("/speech/rec_thresh", default_rec_thresh)
 
@@ -94,12 +96,12 @@ class SpeechRecognizer():
     self.config.set_float('-kws_threshold', 1e-2) #Threshold for p(hyp)/p(alternatives) ratio
     self.config.set_float('-kws_plp',1e-10 ) #Phone loop probability for keyword spotting
     #self.config.set_float('-kws_delay', 1) #Delay to wait for best detection score
-   
-    # Check if we dump extra information to null 
+
+    # Check if we dump extra information to null
     if not self.verbose:
       self.config.set_string('-logfn','/dev/null')
-   
-    # Setup the publisher 
+
+    # Setup the publisher
     if self.str_msg == 'String':
       self.pub = rospy.Publisher(self.cmd_pub_topic, String, queue_size=1)
     else:
@@ -139,17 +141,17 @@ class SpeechRecognizer():
             selectedSegment = seg
             maxProb = seg.prob
         if self.verbose:
-          print ([(seg.word, seg.prob, seg.start_frame, seg.end_frame) for seg in decoder.seg()])
+          print([(seg.word, seg.prob, seg.start_frame, seg.end_frame) for seg in decoder.seg()])
 
         if selectedSegment:
           if selectedSegment.prob > self.RECOGNITION_THRESHOLD:
             if not hypothesis.hypstr == selectedSegment.word:
-              print "Hypothesis and the selected segment do not match! Going with the selected segment"
-            
-            print ("Detected keyword: " + selectedSegment.word)
+              print("Hypothesis and the selected segment do not match! Going with the selected segment")
+
+            print("Detected keyword:", selectedSegment.word)
             # Get the time stamp for the message
             now = rospy.get_rostime()
-            
+
             if self.str_msg == 'String':
               keyphrase = selectedSegment.word
             else:
@@ -159,14 +161,14 @@ class SpeechRecognizer():
 
             self.pub.publish(keyphrase)
           elif self.verbose:
-            print "Not confident enough in the detected keyword"
+            print("Not confident enough in the detected keyword")
         else:
-          print 'No Selected Segment'
+          print('No Selected Segment')
 
         decoder.end_utt()
         decoder.start_utt()
 
 if __name__ == '__main__':
   SpeechRecognizer()
-   
-  
+
+

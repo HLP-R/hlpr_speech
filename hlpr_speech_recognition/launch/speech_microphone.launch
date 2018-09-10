@@ -5,12 +5,12 @@
    <arg name="dict_path" default="$(find hlpr_speech_recognition)/data/kps.dic" />
    <arg name="kps_path" default="$(find hlpr_speech_recognition)/data/kps.txt" />
 
-    <!-- Start the hlpr_speech_recognizer 
-     Note: just an example of how to launch with params 
+    <!-- Start the hlpr_speech_recognizer
+     Note: just an example of how to launch with params
            like the gui, but not tested with mic input! -->
     <node name="speech_recognizer" pkg="hlpr_speech_recognition" type="speech_recognizer" respawn="false" output="screen">
          <param name="dict_path" value="$(arg dict_path)" />
          <param name="kps_path" value="$(arg kps_path)" />
     </node>
-    
+
 </launch>

@@ -54,7 +54,7 @@ class SpeechGui(QtGui.QWidget):
 
   def __init__(self):
       QtGui.QWidget.__init__(self)
- 
+
       newFont = QtGui.QFont("Times", 24, QtGui.QFont.Bold)
 
       # Add a main layout
@@ -66,8 +66,8 @@ class SpeechGui(QtGui.QWidget):
 
       # Initialize rosnode
       rospy.init_node("speech_gui")
-   
-      # Default values for speech listeners  
+
+      # Default values for speech listeners
       rospack = rospkg.RosPack()
       default_pub_topic = 'hlpr_speech_commands'
 
@@ -85,9 +85,9 @@ class SpeechGui(QtGui.QWidget):
       self.keywords = rospy.get_param(SpeechListener.KEYWORDS_PARAM, dict()).values()
       self.commands = [val for sublist in self.keywords for val in sublist]
       self.commands.sort()
- 
+
       positions = [(i,j) for i in range(len(self.commands)) for j in range(3)]
-           
+
       for position, name in zip(positions, self.commands):
           button = QtGui.QPushButton(name)
           button.setObjectName('%s' % name)
@@ -98,8 +98,8 @@ class SpeechGui(QtGui.QWidget):
 
       mainLayout.addLayout(grid)
       mainLayout.addStretch()
-      
-      # Show the GUI 
+
+      # Show the GUI
       self.adjustSize()
       self.setWindowTitle("Speech Commands Interface")
       self.show()
@@ -109,7 +109,7 @@ class SpeechGui(QtGui.QWidget):
       self.pub = rospy.Publisher(self.recog_topic, StampedString, queue_size=1)
 
       rospy.loginfo("Finished initializing speech GUI")
-  
+
   # Button handler after its clicked
   def handleButton(self):
       clicked_button = self.sender()

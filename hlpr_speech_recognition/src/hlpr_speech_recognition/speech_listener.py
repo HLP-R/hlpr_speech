@@ -31,13 +31,13 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# A script to use pocketsphinx's "keyphrase spotting" feature with 
+# A script to use pocketsphinx's "keyphrase spotting" feature with
 # python and ros. Note that it
 #
 # Authors: Baris Akgun, Priyanka Khante
 # Edited: Vivian Chu, 8-29-16 - rosparam and multiple yaml files
 #
-# A convenience class to map speech recognition result to commands 
+# A convenience class to map speech recognition result to commands
 # while keeping the time stamp.
 #
 # Note that currently the mapping is done by hand
@@ -64,7 +64,7 @@ class SpeechListener:
     if (init_node):
       # initialize the ros node
       rospy.init_node("speech_listener")
-  
+
     # Default values for speech listener
     rospack = rospkg.RosPack()
     default_pub_topic = 'hlpr_speech_commands'
@@ -136,7 +136,7 @@ class SpeechListener:
 
     # The command hasn't been ask for before
     self.last_command_fresh = False
-    if (req): 
+    if (req):
       return {'speech_cmd': self.last_command}
     else:
       return self.last_command
@@ -146,7 +146,7 @@ class SpeechListener:
 
   def get_last_ts(self):
     return self.last_ts
-    
+
   # clears commands queue
   def cleanup(self):
     #commandsQueue.clear()
@@ -160,8 +160,8 @@ class SpeechListener:
 
 def listener():
   sl = SpeechListener()
-  sl.spin() 
+  sl.spin()
 
 if __name__ == '__main__':
   listener()
-  
+

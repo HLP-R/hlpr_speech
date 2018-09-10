@@ -13,5 +13,5 @@
     <node name="speech_listener" pkg="hlpr_speech_recognition" type="speech_listener" respawn="false" output="screen" >
          <rosparam param="yaml_list" subst_value="True"> [$(arg yaml_list)]</rosparam>
     </node>
-    
+
 </launch>

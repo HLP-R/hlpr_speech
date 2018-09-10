@@ -28,8 +28,8 @@
     <node name="speech_gui" pkg="hlpr_speech_recognition" type="speech_gui" respawn="false" output="screen" if="$(arg speech_gui)"/>
 
 
-    <!-- Start the hlpr_speech_recognizer 
-     Note: just an example of how to launch with params 
+    <!-- Start the hlpr_speech_recognizer
+     Note: just an example of how to launch with params
            like the gui, but not tested with mic input! -->
     <group unless="$(arg speech_gui)">
         <include file="$(find hlpr_speech_recognition)/launch/speech_microphone.launch">
@@ -37,5 +37,5 @@
             <arg name="kps_path" value="$(arg kps_path)"/>
         </include>
     </group>
-    
+
 </launch>

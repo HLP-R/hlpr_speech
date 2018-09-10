@@ -8,4 +8,4 @@ speech:
     rec_threshold:          300                             # default 300
     service_topic:          'get_last_speech_cmd'           # default 'get_last_speech_cmd'
     leave_command:          false                           # default false
-     
+
