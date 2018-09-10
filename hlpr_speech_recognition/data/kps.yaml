@@ -13,6 +13,9 @@ speech: ["I WILL HELP"]
 tag: "ASSIST_DISAGREE"
 speech: ["I WILL NOT HELP"]
 ---
+tag: "ASSISTANCE_COMPLETE"
+speech: ["I'M DONE"]
+---
 tag: "RESUME_CURRENT"
 speech: ["RETRY FAILED ACTION"]
 ---
