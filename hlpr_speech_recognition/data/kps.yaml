@@ -16,14 +16,20 @@ speech: ["I WILL NOT HELP"]
 tag: "ASSISTANCE_COMPLETE"
 speech: ["I'M DONE"]
 ---
-tag: "RESUME_CURRENT"
-speech: ["RETRY FAILED ACTION"]
+tag: "DISABLE_BASE"
+speech: ["DISABLE BASE"]
 ---
-tag: "RESUME_NEXT"
-speech: ["CONTINUE TO NEXT ACTION"]
+tag: "ENABLE_BASE"
+speech: ["ENABLE BASE"]
+---
+tag: "RESUME_NONE"
+speech: ["STOP EXECUTING"]
+---
+tag: "RESUME_CONTINUE"
+speech: ["RETRY FAILED ACTION"]
 ---
 tag: "RESUME_RETRY"
 speech: ["RESTART TASK"]
 ---
-tag: "RESUME_NONE"
-speech: ["STOP EXECUTING"]
+tag: "RESUME_NEXT"
+speech: ["CONTINUE TO NEXT ACTION"]
