@@ -33,3 +33,6 @@ speech: ["RESTART TASK"]
 ---
 tag: "RESUME_NEXT"
 speech: ["CONTINUE TO NEXT ACTION"]
+---
+tag: "RESUME_PREVIOUS"
+speech: ["RETRY PREVIOUS ACTION"]
