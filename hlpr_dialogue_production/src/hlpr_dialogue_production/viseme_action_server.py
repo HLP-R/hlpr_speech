@@ -37,7 +37,6 @@ class LedVisemeActionServer:
     def __init__(self):
         self._as = actionlib.SimpleActionServer("HLPR_Visemes",dialogue_msgs.VisemeAction, execute_cb=self.execute_cb, auto_start=False)
         self.change_eye = rospy.ServiceProxy("/led_eye",LedEye)
-        self._as.start()
         self.viseme_mapping = {"p": LedEyeRequest.FLAT,
                                "t": LedEyeRequest.FLAT,
                                "S": LedEyeRequest.FLAT,
@@ -58,11 +57,14 @@ class LedVisemeActionServer:
                                "u": LedEyeRequest.WHISTLE,
                                "sil": LedEyeRequest.SMILE}
         self.prev_viseme = "sil"
+        self._as.start()
 
+        rospy.loginfo("Viseme server ready to go")
         
     def execute_cb(self,req):
+        rospy.loginfo("Got request: {}".format(req))
         if req.viseme != self.prev_viseme:
-            l.change_eye(command=LedEyeRequest.UPDATE, which_part=LedEyeRequest.MOUTH, which_feature=LedEyeRequest.SHAPE, mouth_shape=self.viseme_mapping[req.viseme])
+            self.change_eye(command=LedEyeRequest.UPDATE, which_part=LedEyeRequest.MOUTH, which_feature=LedEyeRequest.SHAPE, mouth_shape=self.viseme_mapping[req.viseme])
             self.prev_viseme = req.viseme
         self._as.set_succeeded(dialogue_msgs.VisemeResult(success=True))
             
