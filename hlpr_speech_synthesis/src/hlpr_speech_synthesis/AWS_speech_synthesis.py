@@ -7,21 +7,22 @@ import re
 import json
 import tempfile
 import os
+from contextlib import closing
+import io
 
 class TextToSpeech():
 	def __init__(self, voice='Kimberly'):
-		self.tag_follow_indices = {}	
+		self.tag_follow_indices = {}    
 		self.tags = []
 		self.client = boto3.client('polly')
 		self.voice = voice
-		mixer.pre_init(22050, -16, 2, 2048)
+		# mixer.pre_init(22050, -16, 2, 2048)
 	
 	def collect_tags(self, tagged_text):
-                self.tags = re.findall(r'<.+?>',tagged_text)
-                #print self.tags
+		self.tags = re.findall(r'<.+?>',tagged_text)
 
 	def remove_tags(self, tagged_text):
-		untagged_text = ''					
+		untagged_text = ''                  
 		open_brackets_idx = [m.start() for m in re.finditer('<', tagged_text)]
 		close_brackets_idx = [m.start() for m in re.finditer('>', tagged_text)]
 		assert(len(open_brackets_idx)==len(close_brackets_idx))
@@ -33,9 +34,9 @@ class TextToSpeech():
 		for i in range(len(open_brackets_idx)):
 			if(open_brackets_idx[i]!=0):
 				untagged_text = untagged_text + tagged_text[pointer:open_brackets_idx[i]-1]
-			pointer = close_brackets_idx[i]+1 	
+			pointer = close_brackets_idx[i]+1   
 		if(pointer!=len(tagged_text)):
-			untagged_text = untagged_text + tagged_text[pointer:]		
+			untagged_text = untagged_text + tagged_text[pointer:]       
 	
 		return untagged_text
 
@@ -44,10 +45,10 @@ class TextToSpeech():
 		untagged_text = self.remove_tags(tagged_text)
 		untagged_word_list = untagged_text.split()
 		self.collect_tags(tagged_text)
-		#print untagged_word_list
+
 		# Store which word the tags come after
 		for tag in list(set(self.tags)):
-			#tag_idx = tagged_text.find(tag)		#finds only the first occurance
+			#tag_idx = tagged_text.find(tag)        #finds only the first occurance
 			tag_idxs = [m.start() for m in re.finditer(tag, tagged_text)] # find all occurances
 			for tag_idx in tag_idxs:
 				if tag_idx!=0:
@@ -58,86 +59,101 @@ class TextToSpeech():
 					prev_word_idx = untagged_substring.count(' ') + 1
 				
 					if tag not in self.tag_follow_indices:
-                                        	self.tag_follow_indices[tag] = [prev_word_idx]
-                                	else:
-                                        	self.tag_follow_indices[tag].append(prev_word_idx)				
-				else:		
+						self.tag_follow_indices[tag] = [prev_word_idx]
+					else:
+						self.tag_follow_indices[tag].append(prev_word_idx)              
+				else:       
 					if tag not in self.tag_follow_indices:
 						self.tag_follow_indices[tag] = [0]
 					else:
 						self.tag_follow_indices[tag].append(0)
-		#print self.tag_follow_indices
 
 		# Fetch meta info about speech from AWS using boto3
-        	meta_info = self.client.synthesize_speech(
-    			OutputFormat='json',
-    			SpeechMarkTypes=['viseme','word'],
-    			Text=untagged_text,
-    			VoiceId=self.voice)
-		print (meta_info)
+		response = self.client.synthesize_speech(
+				OutputFormat='json',
+				SpeechMarkTypes=['viseme','word'],
+				Text=untagged_text,
+				VoiceId=self.voice)
 		
-		# TODO: Unpack meta info json to an unsorted list of dictionaries
-        	for key in meta_info:	
-			print key
+		# Unpack meta info json to an unsorted list of dictionaries
+		s = []
+		if "AudioStream" in response:
+			with closing(response["AudioStream"]) as stream:
+				   data = stream.read()
 
+				   s = data.split('\n') 
+				   s = [json.loads(line) for line in s if line != '']
+		else:
+			print("Could not stream audio")
+		# print(s)
+		# sys.exit(-1)
+
+		return untagged_text, s
 
 	def phrase_to_file(self, tagged_text, output_file_loc):
 		# Remove tags from the input string
-        	untagged_text = self.remove_tags(tagged_text)
+		# untagged_text = self.remove_tags(tagged_text)
+		untagged_text, s = obj.extract_behaviors(tagged_text)
 
 		# Fetch audio for speech from AWS using boto3
-        	spoken_text = self.client.synthesize_speech(
-                        OutputFormat='mp3',
-                        #SpeechMarkTypes=['viseme','word','sentence'],
-                        Text=untagged_text,
-                        VoiceId=self.voice)
+		spoken_text = self.client.synthesize_speech(
+						OutputFormat='mp3',
+						#SpeechMarkTypes=['viseme','word','sentence'],
+						Text=untagged_text,
+						VoiceId=self.voice)
 
 		# Write audio to a file
 		with open(output_file_loc,'wb') as f:
 			f.write(spoken_text['AudioStream'].read())
 			f.close()
 
+		b = {
+		'text': untagged_text,
+		'file': os.getcwd() + '/' + output_file_loc,
+		'behaviors': s
+		}
+
+		return b
+
 	def say(self, untagged_text, wait=False, interrupt=True):
-		if interrupt:
-			self.shutup()
+		# if interrupt:
+		# 	self.shutup()
 
-		# Get audio file from AWS 
-		spoken_text = self.client.synthesize_speech(
-                        OutputFormat='mp3',
-                        Text=untagged_text,
-                        VoiceId=self.voice)
+		response = self.client.synthesize_speech(
+				OutputFormat='json',
+				SpeechMarkTypes=['viseme','word'],
+				Text=untagged_text,
+				VoiceId=self.voice)
 
-		#TODO: play audio using pygame by piping a tmp audio file
-		"""
-		with tempfile.NamedTemporaryFile("w+b", suffix='.mp3') as f:
-			f.write(spoken_text['AudioStream'].read())
-			mixer.music.load(f)
-			mixer.music.play()
-		"""
-		
-		with open('/home/asaran/Documents/sync_speech_behaviors/output.mp3','wb') as f:
-			f.write(spoken_text['AudioStream'].read())
-			f.close()
+		with tempfile.SpooledTemporaryFile() as f:
+			if "AudioStream" in response:
+				with closing(response["AudioStream"]) as stream:
+					try:
+						f.write(stream.read())
+					except IOError as error:
+						print(error)
+						sys.exit(-1)
 
-		pygame.init()
-		mixer.init()			
-		try:
-			sound = mixer.Sound('/home/asaran/Documents/sync_speech_behaviors/output.mp3')
-			print 'the sound file is',sound.get_length(),'seconds long'
-			mixer.music.load('/home/asaran/Documents/sync_speech_behaviors/output.mp3')
-                	mixer.music.play()
-		except:
-			raise UserWarning, 'could not load or play soundfile :('	
+			else:
+				print("Could not stream audio")
+				sys.exit(-1)
+			f.seek(0)
 
-		if wait:
-			while self.is_speaking() == True:
-				pass
-		else:
-			# TODO: Amount of time left to play the audio
-			time_left = (sound.get_length() - mixer.music.get_pos())*-1 
-			print 'time left is',time_left,'seconds'
-			return time_left
-		return
+			if not pygame.mixer.get_init():
+				pygame.mixer.init()
+			else:
+				if interrupt:
+					pygame.mixer.stop()
+			channel = pygame.mixer.Channel(5)
+			sound = pygame.mixer.Sound(file=f)
+			channel.play(sound)
+
+			if wait:
+				while channel.get_busy():
+					pass
+				return -1
+
+		return sound.get_length()
 
 	def is_speaking(self):
 		# Returns whether or not audio is being played
@@ -152,14 +168,8 @@ class TextToSpeech():
 
 if __name__ == '__main__':
 	tagged_string = "Hello <wave>! How are <lookat face_loc> you?"
-	print tagged_string
-	obj = TextToSpeech(voice='Kimberly')	
-	obj.extract_behaviors(tagged_string)
-	obj.phrase_to_file(tagged_string, 'out.mp3')
-	untagged_string = obj.remove_tags(tagged_string)
-	obj.say(untagged_string, True, False)
-
+	print(tagged_string)
+	obj = TextToSpeech(voice='Kimberly')    
 	
-
-					
-
+	b = obj.phrase_to_file(tagged_string, 'data/out.mp3')
+	obj.say(b['text'], wait=True, interrupt=False)
