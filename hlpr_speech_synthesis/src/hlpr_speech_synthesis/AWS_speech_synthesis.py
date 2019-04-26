@@ -16,7 +16,6 @@ class TextToSpeech():
 		self.tags = []
 		self.client = boto3.client('polly')
 		self.voice = voice
-		# mixer.pre_init(22050, -16, 2, 2048)
 	
 	def collect_tags(self, tagged_text):
 		self.tags = re.findall(r'<.+?>',tagged_text)
@@ -48,7 +47,6 @@ class TextToSpeech():
 
 		# Store which word the tags come after
 		for tag in list(set(self.tags)):
-			#tag_idx = tagged_text.find(tag)        #finds only the first occurance
 			tag_idxs = [m.start() for m in re.finditer(tag, tagged_text)] # find all occurances
 			for tag_idx in tag_idxs:
 				if tag_idx!=0:
@@ -85,20 +83,17 @@ class TextToSpeech():
 				   s = [json.loads(line) for line in s if line != '']
 		else:
 			print("Could not stream audio")
-		# print(s)
-		# sys.exit(-1)
 
 		return untagged_text, s
 
 	def phrase_to_file(self, tagged_text, output_file_loc):
+
 		# Remove tags from the input string
-		# untagged_text = self.remove_tags(tagged_text)
 		untagged_text, s = obj.extract_behaviors(tagged_text)
 
 		# Fetch audio for speech from AWS using boto3
 		spoken_text = self.client.synthesize_speech(
 						OutputFormat='mp3',
-						#SpeechMarkTypes=['viseme','word','sentence'],
 						Text=untagged_text,
 						VoiceId=self.voice)
 
@@ -116,16 +111,13 @@ class TextToSpeech():
 		return b
 
 	def say(self, untagged_text, wait=False, interrupt=True):
-		# if interrupt:
-		# 	self.shutup()
 
 		response = self.client.synthesize_speech(
-				OutputFormat='json',
-				SpeechMarkTypes=['viseme','word'],
+				OutputFormat='ogg_vorbis',
 				Text=untagged_text,
 				VoiceId=self.voice)
 
-		with tempfile.SpooledTemporaryFile() as f:
+		with tempfile.TemporaryFile() as f:
 			if "AudioStream" in response:
 				with closing(response["AudioStream"]) as stream:
 					try:
@@ -137,6 +129,7 @@ class TextToSpeech():
 			else:
 				print("Could not stream audio")
 				sys.exit(-1)
+
 			f.seek(0)
 
 			if not pygame.mixer.get_init():
@@ -145,7 +138,8 @@ class TextToSpeech():
 				if interrupt:
 					pygame.mixer.stop()
 			channel = pygame.mixer.Channel(5)
-			sound = pygame.mixer.Sound(file=f)
+			channel.set_volume(1.0)
+			sound = pygame.mixer.Sound(f)
 			channel.play(sound)
 
 			if wait:
@@ -153,23 +147,16 @@ class TextToSpeech():
 					pass
 				return -1
 
+
 		return sound.get_length()
 
 	def is_speaking(self):
 		# Returns whether or not audio is being played
 		return mixer.music.get_busy()
 
-	def shutup(self):
-		# Stops playing the audio
-		pygame.quit()
-		mixer.quit()
-		if os.path.exists('/home/asaran/Documents/sync_speech_behaviors/output.mp3'):
-			os.remove('/home/asaran/Documents/sync_speech_behaviors/output.mp3')
-
 if __name__ == '__main__':
 	tagged_string = "Hello <wave>! How are <lookat face_loc> you?"
 	print(tagged_string)
 	obj = TextToSpeech(voice='Kimberly')    
-	
 	b = obj.phrase_to_file(tagged_string, 'data/out.mp3')
 	obj.say(b['text'], wait=True, interrupt=False)
