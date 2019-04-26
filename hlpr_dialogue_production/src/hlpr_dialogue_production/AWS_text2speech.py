@@ -152,7 +152,11 @@ class TextToSpeech():
 
 	def is_speaking(self):
 		# Returns whether or not audio is being played
-		return mixer.music.get_busy()
+        	return not pygame.mixer.get_init() or pygame.mixer.Channel(5).get_busy()
+
+        def shutup(self):
+        	if pygame.mixer.get_init():
+			pygame.mixer.stop()
 
 if __name__ == '__main__':
 	tagged_string = "Hello <wave>! How are <lookat face_loc> you?"
