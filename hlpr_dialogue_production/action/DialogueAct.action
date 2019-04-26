@@ -1,0 +1,7 @@
+string text_or_key
+string audio_file
+string behavior_yaml
+---
+string outcome
+---
+string[] active_states

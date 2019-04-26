@@ -1,0 +1,2 @@
+[test1] Hello there! <test>How are you?
+[test2] <test>This phrase tests the <test>timing of the <test>actions.
