@@ -83,10 +83,11 @@ class TextToSpeech():
 				   s = [json.loads(line) for line in s if line != '']
 		else:
 			print("Could not stream audio")
+			
 
 		return untagged_text, s
 
-	def phrase_to_file(self, tagged_text, output_file_loc):
+	def phrase_to_file(self, name, tagged_text, output_dir):
 
 		# Remove tags from the input string
 		untagged_text, s = obj.extract_behaviors(tagged_text)
@@ -102,9 +103,12 @@ class TextToSpeech():
 			f.write(spoken_text['AudioStream'].read())
 			f.close()
 
+		# get absolute dir path
+		output_dir_path = os.path.abspath(os.path.expanduser(output_dir))
+
 		b = {
-		'text': untagged_text,
-		'file': os.getcwd() + '/' + output_file_loc,
+		'text': '"'+untagged_text+'"',
+		'file': output_dir_path + '/' + name + '.ogg',
 		'behaviors': s
 		}
 
@@ -162,5 +166,5 @@ if __name__ == '__main__':
 	tagged_string = "Hello <wave>! How are <lookat face_loc> you?"
 	print(tagged_string)
 	obj = TextToSpeech(voice='Kimberly')    
-	b = obj.phrase_to_file(tagged_string, 'data/out.mp3')
+	b = obj.phrase_to_file('out',tagged_string, 'data/')
 	obj.say(b['text'], wait=True, interrupt=False)
