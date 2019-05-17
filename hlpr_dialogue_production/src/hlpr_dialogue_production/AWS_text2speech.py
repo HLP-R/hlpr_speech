@@ -33,16 +33,14 @@ class TextToSpeech():
 			'sub',		# pronouncing acronyms and abbreviations
 			'w',		# improving pronunciation by specifying parts of speech
 			'amazon:auto-breaths',	# adding the sound of breathing
-                        'amazon:effect',
-                        #'amazon:effect name=\"drc\"',	#adding dynamic range compression
+			'amazon:effect',
+			#'amazon:effect name=\"drc\"',	#adding dynamic range compression
 			#'amazon:effect phonation=\"soft\"',	# speaking softly
 			#'amazon:effect vocal-tract-length',	# controlling timbre
 			#'amazon:effect name=\"whispered\"'	# whispering
 			'amazon:breath'	# breathing
 		]
 	        
-	# def collect_tags(self, tagged_text):
-	# 	self.tags = re.findall(r'<.+?>',tagged_text)
 
 	def remove_tags(self, tagged_text):
 		untagged_text = ''                  
@@ -57,15 +55,13 @@ class TextToSpeech():
 		for i in range(len(open_brackets_idx)):
 			retain = ''
 			tag = tagged_text[open_brackets_idx[i]:close_brackets_idx[i]+1]
-			print tag
+
 			# keep the tags from amazon polly as part of untagged_text string
 			if any(pt for pt in self.polly_tags if ('<'+pt+' ' in tag) or ('<'+pt+'>' in tag) or ('</'+pt in tag)):
 				retain = tag
-				print('retaining: ',retain)
+				# print('retaining: ',retain)
 			else:
 				self.tags.append(tag)
-
-
                                 
 			if(open_brackets_idx[i]!=0):
 				untagged_text += tagged_text[pointer:open_brackets_idx[i]] + retain
@@ -73,7 +69,6 @@ class TextToSpeech():
 			else:
 				untagged_text += retain 
 
-			# print(tag,untagged_text)
 			pointer = close_brackets_idx[i]+1   
 		if(pointer!=len(tagged_text)):
 			untagged_text = untagged_text + tagged_text[pointer:]       
@@ -83,17 +78,11 @@ class TextToSpeech():
 	def extract_behaviors(self, tagged_text):
 		# Remove tags from the input string
 		untagged_text = self.remove_tags(tagged_text)
-		# print('untagged text: ',untagged_text)
-		# print(self.tags)
-		# untagged_word_list = untagged_text.split()
-		# self.collect_tags(tagged_text)
-		# print(self.tags)
 
 		# Store which word the tags come after
 		for tag in list(set(self.tags)):
 			tag_idxs = [m.start() for m in re.finditer(tag, tagged_text)] # find all occurances
 			for tag_idx in tag_idxs:
-				# print(tag_idx)
 				if tag_idx!=0:
 					substring = tagged_text[:tag_idx]
 					if(substring[-1]==' '):
@@ -117,7 +106,6 @@ class TextToSpeech():
 				args = t.strip("<>").split()
 				act = args.pop(0)			
 				self.actions.append([idx, act, args])
-		# print(self.actions)
 
 
 		# Fetch meta info about speech from AWS using boto3
@@ -150,7 +138,6 @@ class TextToSpeech():
 				a[0] = s[-1]["time"] / 1000.  # convert ms to seconds
 			else:
 				a[0] = (word_times[a[0]]["time"]) / 1000.  # convert ms to seconds
-
 
 		data=[]
 		for a in self.actions:
