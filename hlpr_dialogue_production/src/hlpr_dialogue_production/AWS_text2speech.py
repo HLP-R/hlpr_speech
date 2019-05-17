@@ -18,7 +18,7 @@ class TextToSpeech():
 		self.client = boto3.client('polly')
 		self.voice = voice
 		self.actions = []
-	
+	        
 	def collect_tags(self, tagged_text):
 		self.tags = re.findall(r'<.+?>',tagged_text)
 
@@ -35,10 +35,10 @@ class TextToSpeech():
 		for i in range(len(open_brackets_idx)):
 			if(open_brackets_idx[i]!=0):
 				untagged_text = untagged_text + tagged_text[pointer:open_brackets_idx[i]-1]
-			pointer = close_brackets_idx[i]+1   
+			        pointer = close_brackets_idx[i]+1   
 		if(pointer!=len(tagged_text)):
 			untagged_text = untagged_text + tagged_text[pointer:]       
-	
+	                
 		return untagged_text
 
 	def extract_behaviors(self, tagged_text):
@@ -57,9 +57,9 @@ class TextToSpeech():
 					substring = tagged_text[:tag_idx]
 					if(substring[-1]==' '):
 						substring = substring[:-1]
-					untagged_substring = self.remove_tags(substring)
-					prev_word_idx = substring.count(' ') + 1
-				
+					        untagged_substring = self.remove_tags(substring)
+					        prev_word_idx = substring.count(' ') + 1
+				                
 					if tag not in self.tag_follow_indices:
 						self.tag_follow_indices[tag] = [prev_word_idx]
 					else:
@@ -76,7 +76,7 @@ class TextToSpeech():
 				args = t.strip("<>").split()
 				act = args.pop(0)			
 				self.actions.append([idx, act, args])
-		print(self.actions)
+		                print(self.actions)
 
 
 		# Fetch meta info about speech from AWS using boto3
@@ -89,7 +89,7 @@ class TextToSpeech():
 		except (BotoCoreError, ClientError) as error:
 			print(error)
 			sys.exit(-1)
-		
+		        
 		# Unpack meta info json to an unsorted list of dictionaries
 		s = []
 		if "AudioStream" in response:
@@ -114,60 +114,41 @@ class TextToSpeech():
 		for a in self.actions:
 			args = a[2]
 			data.append({"start":float(a[0]),
-						 "type":"action",
-						 "args":args,
-			 "id": a[1]}) # End edits
+				     "type":a[1],
+				     "args":args,
+			             "id": a[1]}) # End edits
 
 
-		vis_transl = {"p": "M_B_P",
-				  "t": "N_NG_D_Z",
-				  "S": "CH_SH_ZH",
-				  "T": "N_NG_D_Z",
-				  "f": "M_B_P",
-				  "k": "AA_AH",
-				  "i": "EY",
-				  "r": "R_ER",
-				  "s": "N_NG_D_Z",
-				  "u": "CH_SH_ZH",
-				  "@": "AA_AH",
-				  "a": "AA_AH",
-				  "e": "EY",
-				  "E": "EH_AE_AY",
-				  "i": "EY",
-				  "o": "AO_AW",
-				  "O": "AA_AH",
-				  "u": "AO_AW",
-				  "sil": "IDLE"}
-
-		visemes = map(lambda l: [l["time"],vis_transl[l["value"]]], filter(lambda l: l["type"]=="viseme",s))
+		visemes = map(lambda l: [l["time"],l["value"]], filter(lambda l: l["type"]=="viseme",s))
 		for v in visemes:
-				data.append({"start":float(v[0]) / 1000.,  # convert ms to seconds
-							 "type":"viseme",
-							 "id": v[1]}) 
+			data.append({"start":float(v[0]) / 1000.,  # convert ms to seconds
+				     "type":"viseme",
+				     "args":"",
+				     "id": v[1]}) 
 
 		return untagged_text, data
 
 
 	def extract_behaviors_old(self,line):
 		vis_transl = {"p": "M_B_P",
-				  "t": "N_NG_D_Z",
-				  "S": "CH_SH_ZH",
-				  "T": "N_NG_D_Z",
-				  "f": "M_B_P",
-				  "k": "AA_AH",
-				  "i": "EY",
-				  "r": "R_ER",
-				  "s": "N_NG_D_Z",
-				  "u": "CH_SH_ZH",
-				  "@": "AA_AH",
-				  "a": "AA_AH",
-				  "e": "EY",
-				  "E": "EH_AE_AY",
-				  "i": "EY",
-				  "o": "AO_AW",
-				  "O": "AA_AH",
-				  "u": "AO_AW",
-				  "sil": "IDLE"}
+			      "t": "N_NG_D_Z",
+			      "S": "CH_SH_ZH",
+			      "T": "N_NG_D_Z",
+			      "f": "M_B_P",
+			      "k": "AA_AH",
+			      "i": "EY",
+			      "r": "R_ER",
+			      "s": "N_NG_D_Z",
+			      "u": "CH_SH_ZH",
+			      "@": "AA_AH",
+			      "a": "AA_AH",
+			      "e": "EY",
+			      "E": "EH_AE_AY",
+			      "i": "EY",
+			      "o": "AO_AW",
+			      "O": "AA_AH",
+			      "u": "AO_AW",
+			      "sil": "IDLE"}
 		
 
 		tokens = re.split("(<[^<>]*>)", line)
@@ -202,7 +183,7 @@ class TextToSpeech():
 
 		try:
 			response = self.client.synthesize_speech(Text=phrase, OutputFormat="json",
-														VoiceId=self.voice, SpeechMarkTypes =["viseme", "word"])
+								 VoiceId=self.voice, SpeechMarkTypes =["viseme", "word"])
 		except (BotoCoreError, ClientError) as error:
 			print(error)
 			sys.exit(-1)
@@ -229,15 +210,15 @@ class TextToSpeech():
 		for a in actions:
 			args = a[2]
 			data.append({"start":float(a[0]),
-						 "type":"action",
-						 "args":args,
-			 			 "id": a[1]}) # End edits
+				     "type":"action",
+				     "args":args,
+			 	     "id": a[1]}) # End edits
 
 		visemes = map(lambda l: [l["time"],vis_transl[l["value"]]], filter(lambda l: l["type"]=="viseme",s))
 		for v in visemes:
 			data.append({"start":float(v[0]) / 1000.,  # convert ms to seconds
-						 "type":"viseme",
-						 "id": v[1]})	
+				     "type":"viseme",
+				     "id": v[1]})	
 
 
 		print('phrase: ',phrase)
@@ -252,9 +233,9 @@ class TextToSpeech():
 
 		# Fetch audio for speech from AWS using boto3
 		spoken_text = self.client.synthesize_speech(
-						OutputFormat='mp3',
-						Text=untagged_text,
-						VoiceId=self.voice)		
+			OutputFormat='mp3',
+			Text=untagged_text,
+			VoiceId=self.voice)		
 
 		# get absolute dir path
 		output_dir_path = os.path.abspath(os.path.expanduser(output_dir))
@@ -275,9 +256,9 @@ class TextToSpeech():
 	def say(self, untagged_text, wait=False, interrupt=True):
 
 		response = self.client.synthesize_speech(
-				OutputFormat='ogg_vorbis',
-				Text=untagged_text,
-				VoiceId=self.voice)
+			OutputFormat='ogg_vorbis',
+			Text=untagged_text,
+			VoiceId=self.voice)
 
 		with tempfile.TemporaryFile() as f:
 			if "AudioStream" in response:
@@ -299,10 +280,10 @@ class TextToSpeech():
 			else:
 				if interrupt:
 					pygame.mixer.stop()
-			channel = pygame.mixer.Channel(5)
-			channel.set_volume(1.0)
-			sound = pygame.mixer.Sound(f)
-			channel.play(sound)
+			                channel = pygame.mixer.Channel(5)
+			                channel.set_volume(1.0)
+			                sound = pygame.mixer.Sound(f)
+			                channel.play(sound)
 
 			if wait:
 				while channel.get_busy():
