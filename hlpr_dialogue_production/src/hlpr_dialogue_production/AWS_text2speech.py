@@ -18,9 +18,29 @@ class TextToSpeech():
 		self.client = boto3.client('polly')
 		self.voice = voice
 		self.actions = []
+		self.polly_tags = [ 
+			'break',	# adding a pause
+			'emphasis', # emphasizing words
+			'lang',		# specify another language for specific words
+			'mark',		# placing a custom tag in your text
+			'p',		# adding a pause between paragraphs
+			'phoneme',	# using phonetic pronunciation
+			'prosody',	# controlling volume, speaking rate and pitch
+			'prosody amazon:max-duration',	# setting a maximum duration for synthesized speech
+			's',		# adding a pause between sentences
+			'say-as',	# controlling how special types of words are spoken
+			'speak',	# identifying SSML-Enhanced text
+			'sub',		# pronouncing acronyms and abbreviations
+			'w',		# improving pronunciation by specifying parts of speech
+			'amazon:auto-breaths',	# adding the sound of breathing
+			'amazon:effect name=\"drc\"',	#adding dynamic range compression
+			'amazon:effect phonation=\"soft\"',	# speaking softly
+			'amazon:effect vocal-tract-length',	# controlling timbre
+			'amazon: effect name=\"whispered\"'	# whispering
+		]
 	        
-	def collect_tags(self, tagged_text):
-		self.tags = re.findall(r'<.+?>',tagged_text)
+	# def collect_tags(self, tagged_text):
+	# 	self.tags = re.findall(r'<.+?>',tagged_text)
 
 	def remove_tags(self, tagged_text):
 		untagged_text = ''                  
@@ -33,8 +53,22 @@ class TextToSpeech():
 
 		pointer = 0
 		for i in range(len(open_brackets_idx)):
+			retain = ''
+			tag = tagged_text[open_brackets_idx[i]:close_brackets_idx[i]+1]
+			
+			# keep the tags from amazon polly as part of untagged_text string
+			if any(pt for pt in self.polly_tags if ('<'+pt+' ' in tag) or ('<'+pt+'>' in tag) or ('</'+pt in tag)):
+				retain = tag
+				# print('retaining: ',retain)
+			else:
+				self.tags.append(tag)
+
 			if(open_brackets_idx[i]!=0):
-				untagged_text = untagged_text + tagged_text[pointer:open_brackets_idx[i]-1]
+				untagged_text += tagged_text[pointer:open_brackets_idx[i]-1] + retain
+			else:
+				untagged_text += retain 
+
+			# print(tag,untagged_text)
 			pointer = close_brackets_idx[i]+1   
 		if(pointer!=len(tagged_text)):
 			untagged_text = untagged_text + tagged_text[pointer:]       
@@ -44,15 +78,17 @@ class TextToSpeech():
 	def extract_behaviors(self, tagged_text):
 		# Remove tags from the input string
 		untagged_text = self.remove_tags(tagged_text)
-		untagged_word_list = untagged_text.split()
-		self.collect_tags(tagged_text)
-		print(self.tags)
+		# print('untagged text: ',untagged_text)
+		# print(self.tags)
+		# untagged_word_list = untagged_text.split()
+		# self.collect_tags(tagged_text)
+		# print(self.tags)
 
 		# Store which word the tags come after
 		for tag in list(set(self.tags)):
 			tag_idxs = [m.start() for m in re.finditer(tag, tagged_text)] # find all occurances
 			for tag_idx in tag_idxs:
-				print(tag_idx)
+				# print(tag_idx)
 				if tag_idx!=0:
 					substring = tagged_text[:tag_idx]
 					if(substring[-1]==' '):
@@ -76,7 +112,7 @@ class TextToSpeech():
 				args = t.strip("<>").split()
 				act = args.pop(0)			
 				self.actions.append([idx, act, args])
-		print(self.actions)
+		# print(self.actions)
 
 
 		# Fetch meta info about speech from AWS using boto3
@@ -181,7 +217,7 @@ class TextToSpeech():
 			if not pygame.mixer.get_init():
 				pygame.mixer.init()
 			else:
-                                if interrupt:
+				if interrupt:
 					pygame.mixer.stop()
 			channel = pygame.mixer.Channel(5)
 			channel.set_volume(1.0)
@@ -205,7 +241,7 @@ class TextToSpeech():
 			pygame.mixer.stop()
 
 if __name__ == '__main__':
-	tagged_string = "Hello <wave>! How are <lookat face_loc> you?"
+	tagged_string = "Hello <wave>! How are <lookat face_loc> you? <mark> hello again! </mark>"
 	print(tagged_string)
 	obj = TextToSpeech(voice='Kimberly')    
 	b = obj.phrase_to_file('out',tagged_string, '../../data/')
