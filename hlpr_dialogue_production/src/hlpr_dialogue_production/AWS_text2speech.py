@@ -35,7 +35,7 @@ class TextToSpeech():
 		for i in range(len(open_brackets_idx)):
 			if(open_brackets_idx[i]!=0):
 				untagged_text = untagged_text + tagged_text[pointer:open_brackets_idx[i]-1]
-			        pointer = close_brackets_idx[i]+1   
+			pointer = close_brackets_idx[i]+1   
 		if(pointer!=len(tagged_text)):
 			untagged_text = untagged_text + tagged_text[pointer:]       
 	                
@@ -57,8 +57,8 @@ class TextToSpeech():
 					substring = tagged_text[:tag_idx]
 					if(substring[-1]==' '):
 						substring = substring[:-1]
-					        untagged_substring = self.remove_tags(substring)
-					        prev_word_idx = substring.count(' ') + 1
+					untagged_substring = self.remove_tags(substring)
+					prev_word_idx = substring.count(' ') + 1
 				                
 					if tag not in self.tag_follow_indices:
 						self.tag_follow_indices[tag] = [prev_word_idx]
@@ -76,7 +76,7 @@ class TextToSpeech():
 				args = t.strip("<>").split()
 				act = args.pop(0)			
 				self.actions.append([idx, act, args])
-		                print(self.actions)
+		print(self.actions)
 
 
 		# Fetch meta info about speech from AWS using boto3
@@ -128,103 +128,6 @@ class TextToSpeech():
 
 		return untagged_text, data
 
-
-	def extract_behaviors_old(self,line):
-		vis_transl = {"p": "M_B_P",
-			      "t": "N_NG_D_Z",
-			      "S": "CH_SH_ZH",
-			      "T": "N_NG_D_Z",
-			      "f": "M_B_P",
-			      "k": "AA_AH",
-			      "i": "EY",
-			      "r": "R_ER",
-			      "s": "N_NG_D_Z",
-			      "u": "CH_SH_ZH",
-			      "@": "AA_AH",
-			      "a": "AA_AH",
-			      "e": "EY",
-			      "E": "EH_AE_AY",
-			      "i": "EY",
-			      "o": "AO_AW",
-			      "O": "AA_AH",
-			      "u": "AO_AW",
-			      "sil": "IDLE"}
-		
-
-		tokens = re.split("(<[^<>]*>)", line)
-		print('tokens: ',tokens)
-		phrase = "".join(filter(lambda s: ">" not in s, tokens))
-		print('phrase: ',phrase)
-
-		def cond_split(s):
-			if len(s)>=2 and s[-1]==">" and s[0]=="<":
-				return [s]
-			else:
-				return re.split("\s+",s)
-
-
-		tokens = map(lambda s: cond_split(s), tokens)
-		words = []
-
-		for t in tokens:
-			words += filter(lambda s: len(s) > 0, t)
-
-		actions = []
-		i = 0
-		for w in words:
-			if re.match("<.*>", w):
-				args = w.strip("<>").split()
-				name = args.pop(0)
-				actions.append([i,name,args])
-			else:
-				i += 1
-
-		print('actions: ', actions)
-
-		try:
-			response = self.client.synthesize_speech(Text=phrase, OutputFormat="json",
-								 VoiceId=self.voice, SpeechMarkTypes =["viseme", "word"])
-		except (BotoCoreError, ClientError) as error:
-			print(error)
-			sys.exit(-1)
-
-		s = []
-		if "AudioStream" in response:
-			with closing(response["AudioStream"]) as stream:
-				data = stream.read()
-				s = data.split('\n')
-				s = [json.loads(line) for line in s if line != '']
-		else:
-			print("Could not stream audio")
-			sys.exit(-1)
-
-		word_times = filter(lambda l: l["type"]=="word", s) # Start edits
-		for a in actions:
-			if a[0] > len(word_times)-1:
-				a[0] = s[-1]["time"] / 1000.  # convert ms to seconds
-			else:
-				a[0] = (word_times[a[0]]["time"]) / 1000.  # convert ms to seconds
-
-
-		data=[]
-		for a in actions:
-			args = a[2]
-			data.append({"start":float(a[0]),
-				     "type":"action",
-				     "args":args,
-			 	     "id": a[1]}) # End edits
-
-		visemes = map(lambda l: [l["time"],vis_transl[l["value"]]], filter(lambda l: l["type"]=="viseme",s))
-		for v in visemes:
-			data.append({"start":float(v[0]) / 1000.,  # convert ms to seconds
-				     "type":"viseme",
-				     "id": v[1]})	
-
-
-		print('phrase: ',phrase)
-		print('data:' ,data)
-
-		return phrase, data
 
 	def phrase_to_file(self, name, tagged_text, output_dir):
 
@@ -278,12 +181,12 @@ class TextToSpeech():
 			if not pygame.mixer.get_init():
 				pygame.mixer.init()
 			else:
-				if interrupt:
+                                if interrupt:
 					pygame.mixer.stop()
-			                channel = pygame.mixer.Channel(5)
-			                channel.set_volume(1.0)
-			                sound = pygame.mixer.Sound(f)
-			                channel.play(sound)
+			channel = pygame.mixer.Channel(5)
+			channel.set_volume(1.0)
+			sound = pygame.mixer.Sound(f)
+			channel.play(sound)
 
 			if wait:
 				while channel.get_busy():
