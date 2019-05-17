@@ -33,10 +33,12 @@ class TextToSpeech():
 			'sub',		# pronouncing acronyms and abbreviations
 			'w',		# improving pronunciation by specifying parts of speech
 			'amazon:auto-breaths',	# adding the sound of breathing
-			'amazon:effect name=\"drc\"',	#adding dynamic range compression
-			'amazon:effect phonation=\"soft\"',	# speaking softly
-			'amazon:effect vocal-tract-length',	# controlling timbre
-			'amazon: effect name=\"whispered\"'	# whispering
+                        'amazon:effect',
+                        #'amazon:effect name=\"drc\"',	#adding dynamic range compression
+			#'amazon:effect phonation=\"soft\"',	# speaking softly
+			#'amazon:effect vocal-tract-length',	# controlling timbre
+			#'amazon:effect name=\"whispered\"'	# whispering
+			'amazon:breath'	# breathing
 		]
 	        
 	# def collect_tags(self, tagged_text):
@@ -55,16 +57,19 @@ class TextToSpeech():
 		for i in range(len(open_brackets_idx)):
 			retain = ''
 			tag = tagged_text[open_brackets_idx[i]:close_brackets_idx[i]+1]
-			
+			print tag
 			# keep the tags from amazon polly as part of untagged_text string
 			if any(pt for pt in self.polly_tags if ('<'+pt+' ' in tag) or ('<'+pt+'>' in tag) or ('</'+pt in tag)):
 				retain = tag
-				# print('retaining: ',retain)
+				print('retaining: ',retain)
 			else:
 				self.tags.append(tag)
 
+
+                                
 			if(open_brackets_idx[i]!=0):
-				untagged_text += tagged_text[pointer:open_brackets_idx[i]-1] + retain
+				untagged_text += tagged_text[pointer:open_brackets_idx[i]] + retain
+         
 			else:
 				untagged_text += retain 
 
@@ -73,7 +78,7 @@ class TextToSpeech():
 		if(pointer!=len(tagged_text)):
 			untagged_text = untagged_text + tagged_text[pointer:]       
 	                
-		return untagged_text
+		return "<speak>{}</speak>".format(untagged_text)
 
 	def extract_behaviors(self, tagged_text):
 		# Remove tags from the input string
@@ -121,6 +126,7 @@ class TextToSpeech():
 				OutputFormat='json',
 				SpeechMarkTypes=['viseme','word'],
 				Text=untagged_text,
+                                TextType="ssml",
 				VoiceId=self.voice)
 		except (BotoCoreError, ClientError) as error:
 			print(error)
@@ -174,6 +180,7 @@ class TextToSpeech():
 		spoken_text = self.client.synthesize_speech(
 			OutputFormat='mp3',
 			Text=untagged_text,
+                        TextType="ssml",
 			VoiceId=self.voice)		
 
 		# get absolute dir path
@@ -197,6 +204,7 @@ class TextToSpeech():
 		response = self.client.synthesize_speech(
 			OutputFormat='ogg_vorbis',
 			Text=untagged_text,
+                        TextType="ssml",
 			VoiceId=self.voice)
 
 		with tempfile.TemporaryFile() as f:
