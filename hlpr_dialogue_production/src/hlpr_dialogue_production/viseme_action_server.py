@@ -36,6 +36,7 @@ import hlpr_dialogue_production.msg as dialogue_msgs
 class LedVisemeActionServer:
     def __init__(self):
         self._as = actionlib.SimpleActionServer("HLPR_Visemes",dialogue_msgs.VisemeAction, execute_cb=self.execute_cb, auto_start=False)
+        rospy.wait_for_service("/led_eye")
         self.change_eye = rospy.ServiceProxy("/led_eye",LedEye)
         self.viseme_mapping = {"p": LedEyeRequest.FLAT,
                                "t": LedEyeRequest.FLAT,

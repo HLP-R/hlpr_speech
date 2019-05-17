@@ -250,7 +250,7 @@ def viseme_controller_cb(behavior_name, string_args):
         Viseme goal containing the name of the viseme
 
     """
-    return dialogue_msgs.VisemeGoal(viseme=string_args)
+    return dialogue_msgs.VisemeGoal(viseme=behavior_name)
 
 def get_viseme_controller():
     """ Sets up the viseme controller state
@@ -261,7 +261,7 @@ def get_viseme_controller():
     """
 
     
-    time_adj = {"viseme":0.2}
+    time_adj = {"viseme":0.0}
     
     behaviors=time_adj.keys()
     

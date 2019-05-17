@@ -118,8 +118,8 @@ class TextToSpeech():
 				VoiceId=self.voice)
 		except (BotoCoreError, ClientError) as error:
 			print(error)
-			sys.exit(-1)
-		        
+		        response = ""
+                        
 		# Unpack meta info json to an unsorted list of dictionaries
 		s = []
 		if "AudioStream" in response:
@@ -130,7 +130,7 @@ class TextToSpeech():
 				s = [json.loads(line) for line in s if line != '']
 		else:
 			print("Could not stream audio")
-			sys.exit(-1)
+			return untagged_text, []
 
 		word_times = filter(lambda l: l["type"]=="word", s) # Start edits
 		for a in self.actions:
@@ -188,12 +188,16 @@ class TextToSpeech():
 
 	def say(self, untagged_text, wait=False, interrupt=True):
 
-		response = self.client.synthesize_speech(
-			OutputFormat='ogg_vorbis',
-			Text=untagged_text,
-                        TextType="ssml",
-			VoiceId=self.voice)
-
+                try:
+                        response = self.client.synthesize_speech(
+			        OutputFormat='ogg_vorbis',
+			        Text=untagged_text,
+                                TextType="ssml",
+			        VoiceId=self.voice)
+                except:
+                        print "Error synthesizing speech"
+                        return 0
+                        
 		with tempfile.TemporaryFile() as f:
 			if "AudioStream" in response:
 				with closing(response["AudioStream"]) as stream:
@@ -201,11 +205,11 @@ class TextToSpeech():
 						f.write(stream.read())
 					except IOError as error:
 						print(error)
-						sys.exit(-1)
+						
 
 			else:
 				print("Could not stream audio")
-				sys.exit(-1)
+				return
 
 			f.seek(0)
 
