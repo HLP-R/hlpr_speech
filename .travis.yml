@@ -76,12 +76,12 @@ before_install:
   - sudo apt-get install python-pyaudio libportaudio2
 
   #use pip install, because otherwise travis can't find things
-  - pip install catkin-pkg
-  - pip install rosdep
-  - pip install wstool
-  - pip install empy
-  - pip install setuptools
-  - pip install aenum
+  - sudo pip install catkin-pkg
+  - sudo pip install rosdep
+  - sudo pip install wstool
+  - sudo pip install empy
+  - sudo pip install setuptools
+  - sudo pip install aenum
   #- pip install pyaudio
 
 
