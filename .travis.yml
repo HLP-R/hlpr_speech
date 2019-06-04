@@ -41,7 +41,7 @@
 
 ################################################################################
 
-# Use ubuntu trusty (14.04) with sudo privileges.
+# Use ubuntu xenial (16.04) with sudo privileges.
 dist: xenial
 sudo: required
 language:
@@ -59,7 +59,7 @@ env:
     - CI_SOURCE_PATH=$(pwd)
     - ROSINSTALL_FILE=$CI_SOURCE_PATH/dependencies.rosinstall
     - CATKIN_OPTIONS=$CI_SOURCE_PATH/catkin.options
-    - ROS_OS_OVERRIDE="ubuntu:14.04:trusty"
+    - ROS_OS_OVERRIDE="ubuntu:16.04:xenial"
     - ROS_PARALLEL_JOBS='-j8 -l6'
 
 ################################################################################
