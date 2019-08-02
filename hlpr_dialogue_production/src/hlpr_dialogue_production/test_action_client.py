@@ -37,17 +37,20 @@ import sys
 
 
 if __name__ == "__main__":
-    rospy.init_node("test_action_client")
-    client = actionlib.SimpleActionClient("HLPR_Dialogue",dialogue_msgs.DialogueActAction)
+    rospy.init_node("test_action_client", disable_signals=True)
+    client = actionlib.SimpleActionClient("/HLPR_Dialogue",dialogue_msgs.DialogueActAction)
+    rospy.loginfo("waiting for server")
     client.wait_for_server()
-    client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key="Hello! My name is Moe."))
-    client.wait_for_result()
-    client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key="I am a robot!"))
-    client.wait_for_result()
-    client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key="I was built at the Socially Intelligent Machines lab."))    #client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key="Hello!"))
-    #text_or_key = "Hello world"
-    #if len(sys.argv) > 1:
-    #  text_or_key = sys.argv[1]
-    #client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key=text_or_key))
-    client.wait_for_result()
-    print client.get_result()
+    rospy.loginfo("got server")
+    while not rospy.is_shutdown():
+        print("Say what?")
+        try:
+            s = raw_input()
+        except KeyboardInterrupt:
+            print("")
+            print("bye!")
+            rospy.signal_shutdown("requested by user")
+            sys.exit()
+        client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key=s))
+        client.wait_for_result()
+        print(client.get_result())

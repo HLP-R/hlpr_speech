@@ -38,6 +38,7 @@ import actionlib
 import contextlib
 from sound_play.libsoundplay import SoundClient
 from cordial_tts.cordial_tts import CoRDialTTS
+from AWS_text2speech import TextToSpeech
 
 class Synchronizer():
     """ Object that can be passed to all controllers to synchronize their start
@@ -240,7 +241,8 @@ class TTSSpeechStart(smach.State):
         smach.State.__init__(self,outcomes=["done"],
                              input_keys=["marked_text"],
                              output_keys=["text","ordered_behaviors","wav_file"])
-        self._tts = CoRDialTTS(voice)
+        #self._tts = CoRDialTTS(voice)
+	self._tts = TextToSpeech(voice)
 
     def execute(self,userdata):
         text, behaviors = self._tts.extract_behaviors(userdata.marked_text)
@@ -298,8 +300,9 @@ class TTSFallbackSpeechStart(smach.State):
         smach.State.__init__(self,outcomes=["done"],
                              input_keys=["key_or_marked_text"],
                              output_keys=["text","ordered_behaviors","wav_file"])
-        self._tts = CoRDialTTS(voice)
-        self._phrases = phrases
+        #self._tts = CoRDialTTS(voice)
+        self._tts = TextToSpeech(voice)
+	self._phrases = phrases
 
     def execute(self,userdata):
         if userdata.key_or_marked_text in self._phrases:
@@ -570,7 +573,8 @@ class SpeechState(smach.State):
                              input_keys=["text","wav_file"])
         self._tts = use_tts
         if use_tts:
-            self._talker = CoRDialTTS(voice)
+            #self._talker = CoRDialTTS(voice)
+	    self._talker = TextToSpeech(voice)
         self._sound_client = SoundClient()
         self._sync = synchronizer
  

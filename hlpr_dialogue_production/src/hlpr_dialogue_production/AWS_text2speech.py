@@ -74,18 +74,26 @@ class TextToSpeech():
 				VoiceId=self.voice)
 		
 		# Unpack meta info json to an unsorted list of dictionaries
-		s = []
+		output_data = []
 		if "AudioStream" in response:
 			with closing(response["AudioStream"]) as stream:
-				   data = stream.read()
+					data = stream.read()
 
-				   s = data.split('\n') 
-				   s = [json.loads(line) for line in s if line != '']
+					s = data.split('\n')
+					s = [json.loads(line) for line in s if line != '']
+					output_data = map(lambda l: 
+						{
+							"id": "viseme",
+							"start":float(l["time"]) / 1000,
+							"args": l["value"]
+						}
+						, filter(lambda l: l["type"]=="viseme",s))
 		else:
 			print("Could not stream audio")
 			
+		print(output_data)
 
-		return untagged_text, s
+		return untagged_text, output_data
 
 	def phrase_to_file(self, name, tagged_text, output_dir):
 
@@ -156,11 +164,11 @@ class TextToSpeech():
 
 	def is_speaking(self):
 		# Returns whether or not audio is being played
-        	return not pygame.mixer.get_init() or pygame.mixer.Channel(5).get_busy()
+		return not pygame.mixer.get_init() or pygame.mixer.Channel(5).get_busy()
 
-        def shutup(self):
-        	if pygame.mixer.get_init():
-			pygame.mixer.stop()
+		def shutup(self):
+			if pygame.mixer.get_init():
+				pygame.mixer.stop()
 
 if __name__ == '__main__':
 	tagged_string = "Hello <wave>! How are <lookat face_loc> you?"
