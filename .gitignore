@@ -1,2 +1,4 @@
 *.pyc
 *.swp
+hlpr_dialogue_production/data/*
+hlpr_speech_synthesis/src/hlpr_speech_synthesis/data/*
