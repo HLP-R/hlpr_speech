@@ -9,6 +9,7 @@ import tempfile
 import os
 from contextlib import closing
 import io
+from botocore.exceptions import BotoCoreError, ClientError
 
 class TextToSpeech():
 	def __init__(self, voice='Kimberly'):
@@ -16,9 +17,30 @@ class TextToSpeech():
 		self.tags = []
 		self.client = boto3.client('polly')
 		self.voice = voice
-	
-	def collect_tags(self, tagged_text):
-		self.tags = re.findall(r'<.+?>',tagged_text)
+		self.actions = []
+		self.polly_tags = [ 
+			'break',	# adding a pause
+			'emphasis', # emphasizing words
+			'lang',		# specify another language for specific words
+			'mark',		# placing a custom tag in your text
+			'p',		# adding a pause between paragraphs
+			'phoneme',	# using phonetic pronunciation
+			'prosody',	# controlling volume, speaking rate and pitch
+			'prosody amazon:max-duration',	# setting a maximum duration for synthesized speech
+			's',		# adding a pause between sentences
+			'say-as',	# controlling how special types of words are spoken
+			'speak',	# identifying SSML-Enhanced text
+			'sub',		# pronouncing acronyms and abbreviations
+			'w',		# improving pronunciation by specifying parts of speech
+			'amazon:auto-breaths',	# adding the sound of breathing
+			'amazon:effect',
+			#'amazon:effect name=\"drc\"',	#adding dynamic range compression
+			#'amazon:effect phonation=\"soft\"',	# speaking softly
+			#'amazon:effect vocal-tract-length',	# controlling timbre
+			#'amazon:effect name=\"whispered\"'	# whispering
+			'amazon:breath'	# breathing
+		]
+	        
 
 	def remove_tags(self, tagged_text):
 		untagged_text = ''                  
@@ -31,19 +53,31 @@ class TextToSpeech():
 
 		pointer = 0
 		for i in range(len(open_brackets_idx)):
+			retain = ''
+			tag = tagged_text[open_brackets_idx[i]:close_brackets_idx[i]+1]
+
+			# keep the tags from amazon polly as part of untagged_text string
+			if any(pt for pt in self.polly_tags if ('<'+pt+' ' in tag) or ('<'+pt+'>' in tag) or ('</'+pt in tag)):
+				retain = tag
+				# print('retaining: ',retain)
+			else:
+				self.tags.append(tag)
+                                
 			if(open_brackets_idx[i]!=0):
-				untagged_text = untagged_text + tagged_text[pointer:open_brackets_idx[i]-1]
+				untagged_text += tagged_text[pointer:open_brackets_idx[i]] + retain
+         
+			else:
+				untagged_text += retain 
+
 			pointer = close_brackets_idx[i]+1   
 		if(pointer!=len(tagged_text)):
 			untagged_text = untagged_text + tagged_text[pointer:]       
-	
-		return untagged_text
+	                
+		return "<speak>{}</speak>".format(untagged_text)
 
 	def extract_behaviors(self, tagged_text):
 		# Remove tags from the input string
 		untagged_text = self.remove_tags(tagged_text)
-		untagged_word_list = untagged_text.split()
-		self.collect_tags(tagged_text)
 
 		# Store which word the tags come after
 		for tag in list(set(self.tags)):
@@ -54,8 +88,8 @@ class TextToSpeech():
 					if(substring[-1]==' '):
 						substring = substring[:-1]
 					untagged_substring = self.remove_tags(substring)
-					prev_word_idx = untagged_substring.count(' ') + 1
-				
+					prev_word_idx = substring.count(' ') + 1
+				                
 					if tag not in self.tag_follow_indices:
 						self.tag_follow_indices[tag] = [prev_word_idx]
 					else:
@@ -66,34 +100,63 @@ class TextToSpeech():
 					else:
 						self.tag_follow_indices[tag].append(0)
 
+		print(self.tag_follow_indices)
+		for t in self.tag_follow_indices:
+			for idx in self.tag_follow_indices[t]:
+				args = t.strip("<>").split()
+				act = args.pop(0)			
+				self.actions.append([idx, act, args])
+
+
 		# Fetch meta info about speech from AWS using boto3
-		response = self.client.synthesize_speech(
+		try:
+			response = self.client.synthesize_speech(
 				OutputFormat='json',
 				SpeechMarkTypes=['viseme','word'],
 				Text=untagged_text,
+                                TextType="ssml",
 				VoiceId=self.voice)
-		
+		except (BotoCoreError, ClientError) as error:
+			print(error)
+		        response = ""
+                        
 		# Unpack meta info json to an unsorted list of dictionaries
 		output_data = []
 		if "AudioStream" in response:
 			with closing(response["AudioStream"]) as stream:
-					data = stream.read()
+				data = stream.read()
 
-					s = data.split('\n')
-					s = [json.loads(line) for line in s if line != '']
-					output_data = map(lambda l: 
-						{
-							"id": "viseme",
-							"start":float(l["time"]) / 1000,
-							"args": l["value"]
-						}
-						, filter(lambda l: l["type"]=="viseme",s))
+				s = data.split('\n') 
+				s = [json.loads(line) for line in s if line != '']
 		else:
 			print("Could not stream audio")
-			
-		print(output_data)
+			return untagged_text, []
 
-		return untagged_text, output_data
+		word_times = filter(lambda l: l["type"]=="word", s) # Start edits
+		for a in self.actions:
+			if a[0] > len(word_times)-1:
+				a[0] = s[-1]["time"] / 1000.  # convert ms to seconds
+			else:
+				a[0] = (word_times[a[0]]["time"]) / 1000.  # convert ms to seconds
+
+		data=[]
+		for a in self.actions:
+			args = a[2]
+			data.append({"start":float(a[0]),
+				     "type":a[1],
+				     "args":args,
+			             "id": a[1]}) # End edits
+
+
+		visemes = map(lambda l: [l["time"],l["value"]], filter(lambda l: l["type"]=="viseme",s))
+		for v in visemes:
+			data.append({"start":float(v[0]) / 1000.,  # convert ms to seconds
+				     "type":"viseme",
+				     "args":"",
+				     "id": v[1]}) 
+
+		return untagged_text, data
+
 
 	def phrase_to_file(self, name, tagged_text, output_dir):
 
@@ -102,33 +165,39 @@ class TextToSpeech():
 
 		# Fetch audio for speech from AWS using boto3
 		spoken_text = self.client.synthesize_speech(
-						OutputFormat='mp3',
-						Text=untagged_text,
-						VoiceId=self.voice)
-
-		# Write audio to a file
-		with open(output_file_loc,'wb') as f:
-			f.write(spoken_text['AudioStream'].read())
-			f.close()
+			OutputFormat='mp3',
+			Text=untagged_text,
+                        TextType="ssml",
+			VoiceId=self.voice)		
 
 		# get absolute dir path
 		output_dir_path = os.path.abspath(os.path.expanduser(output_dir))
 
 		b = {
-		'text': '"'+untagged_text+'"',
-		'file': output_dir_path + '/' + name + '.ogg',
-		'behaviors': s
+			'text': '"'+untagged_text+'"',
+			'file': output_dir_path + '/' + name + '.ogg',
+			'behaviors': s
 		}
+
+		# Write audio to a file
+		with open(b['file'],'wb') as f:
+			f.write(spoken_text['AudioStream'].read())
+			f.close()
 
 		return b
 
 	def say(self, untagged_text, wait=False, interrupt=True):
 
-		response = self.client.synthesize_speech(
-				OutputFormat='ogg_vorbis',
-				Text=untagged_text,
-				VoiceId=self.voice)
-
+                try:
+                        response = self.client.synthesize_speech(
+			        OutputFormat='ogg_vorbis',
+			        Text=untagged_text,
+                                TextType="ssml",
+			        VoiceId=self.voice)
+                except:
+                        print "Error synthesizing speech"
+                        return 0
+                        
 		with tempfile.TemporaryFile() as f:
 			if "AudioStream" in response:
 				with closing(response["AudioStream"]) as stream:
@@ -136,11 +205,11 @@ class TextToSpeech():
 						f.write(stream.read())
 					except IOError as error:
 						print(error)
-						sys.exit(-1)
+						
 
 			else:
 				print("Could not stream audio")
-				sys.exit(-1)
+				return
 
 			f.seek(0)
 
@@ -166,13 +235,14 @@ class TextToSpeech():
 		# Returns whether or not audio is being played
 		return not pygame.mixer.get_init() or pygame.mixer.Channel(5).get_busy()
 
-		def shutup(self):
-			if pygame.mixer.get_init():
-				pygame.mixer.stop()
+	def shutup(self):
+		if pygame.mixer.get_init():
+			pygame.mixer.stop()
+
 
 if __name__ == '__main__':
-	tagged_string = "Hello <wave>! How are <lookat face_loc> you?"
+	tagged_string = "Hello <wave>! How are <lookat face_loc> you? <mark> hello again! </mark>"
 	print(tagged_string)
 	obj = TextToSpeech(voice='Kimberly')    
-	b = obj.phrase_to_file('out',tagged_string, 'data/')
+	b = obj.phrase_to_file('out',tagged_string, '../../data/')
 	obj.say(b['text'], wait=True, interrupt=False)
