@@ -121,7 +121,7 @@ class TextToSpeech():
 		        response = ""
                         
 		# Unpack meta info json to an unsorted list of dictionaries
-		s = []
+		output_data = []
 		if "AudioStream" in response:
 			with closing(response["AudioStream"]) as stream:
 				data = stream.read()
@@ -238,6 +238,7 @@ class TextToSpeech():
 	def shutup(self):
 		if pygame.mixer.get_init():
 			pygame.mixer.stop()
+
 
 if __name__ == '__main__':
 	tagged_string = "Hello <wave>! How are <lookat face_loc> you? <mark> hello again! </mark>"
