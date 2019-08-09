@@ -181,7 +181,7 @@ class ControllerState(smach.State):
             goal = self._cb(b["id"],b["args"])
             if goal==None:
                 continue
-            while rospy.Time.now()-self._sync.time < rospy.Duration.from_sec(start) and not self.preempt_requested():
+            while not self.preempt_requested() and rospy.Time.now()-self._sync.time < rospy.Duration.from_sec(start):
                 rospy.sleep(0.001)
 
             if self.preempt_requested():
@@ -305,7 +305,7 @@ class TTSFallbackSpeechStart(smach.State):
         if userdata.key_or_marked_text in self._phrases:
             phrase = self._phrases[userdata.key_or_marked_text]
             if "text" in phrase:
-                text = phrase["text"]
+                 text = phrase["text"]
             else:
                 text = None
             wav_file = phrase["file"]
@@ -579,6 +579,7 @@ class SpeechState(smach.State):
         if userdata.wav_file==None:
             if userdata.text!=None and len(userdata.text)!=0:
                 speech_duration = self._talker.say(userdata.text,wait=False)
+                rospy.sleep(0.5)
                 self._sync.start()
             else:
                 return "no_audio"

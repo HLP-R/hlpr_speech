@@ -228,6 +228,48 @@ def get_gesture_controller():
                            dialogue_msgs.GestureAction,
                            gesture_controller_cb, time_adj)
 
+def viseme_controller_cb(behavior_name, string_args):
+    """Callback to create a VisemeGoal from string arguments
+    
+    Given a string of arguments (pulled from the behavior tags in a speech
+    string), selects the series of named keypoints that define the geature.
+    These keypoints are currently defined in the Gesture Action Server (in
+    ``gesture_action_server.py``. To add more keypoints, see the documentation
+    for that file.
+
+    Parameters
+    ----------
+    behavior_name : str
+        The name of the behavior being handled
+    string_args : list of str
+        The arguments that were parsed from the speech string, as strings
+
+    Returns
+    -------
+    VisemeGoal
+        Viseme goal containing the name of the viseme
+
+    """
+    return dialogue_msgs.VisemeGoal(viseme=string_args)
+
+def get_viseme_controller():
+    """ Sets up the viseme controller state
+
+    Sets up the viseme controller state to connect to the viseme action
+    server in this package.  
+
+    """
+
+    
+    time_adj = {"viseme":0.2}
+    
+    behaviors=time_adj.keys()
+    
+    return ControllerState("VISEME_CONTROLLER", behaviors, "/HLPR_Visemes",
+                           dialogue_msgs.VisemeAction,
+                           viseme_controller_cb, time_adj)
+
+
 def test_controller_cb(behavior_name, string_args):
     """Callback to create a FibonacciGoal from string arguments
     

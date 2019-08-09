@@ -40,10 +40,14 @@ if __name__ == "__main__":
     rospy.init_node("test_action_client")
     client = actionlib.SimpleActionClient("HLPR_Dialogue",dialogue_msgs.DialogueActAction)
     client.wait_for_server()
-    #client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key="<shrug>I'm not sure what's going on. I'm going to <test>keep talking though, because I need to give the gesture <lookat right_ee_link 0.0 0.0 1.0>time to complete."))
-    text_or_key = "Hello world"
-    if len(sys.argv) > 1:
-      text_or_key = sys.argv[1]
-    client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key=text_or_key))
+    client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key="Hello! My name is Moe."))
+    client.wait_for_result()
+    client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key="I am a robot!"))
+    client.wait_for_result()
+    client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key="I was built at the Socially Intelligent Machines lab."))    #client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key="Hello!"))
+    #text_or_key = "Hello world"
+    #if len(sys.argv) > 1:
+    #  text_or_key = sys.argv[1]
+    #client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key=text_or_key))
     client.wait_for_result()
     print client.get_result()

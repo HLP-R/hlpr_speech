@@ -65,6 +65,7 @@ catkin_python_setup()
    FILES
    DialogueAct.action
    Gesture.action
+   Viseme.action
  )
 
 # Generate added messages and services with any dependencies listed here
