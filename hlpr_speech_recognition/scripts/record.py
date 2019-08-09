@@ -3,7 +3,7 @@ import sounddevice as sd
 import soundfile as sf
 import tempfile
 import argparse
-import queue
+import Queue as queue
 import sys
 
 DEVICE = 6
