@@ -35,6 +35,9 @@ import actionlib
 import hlpr_dialogue_production.msg as dialogue_msgs
 import sys
 
+# Here's an example of how to say "Lupe" with proper emphasis:
+#     client.send_goal(dialogue_msgs.DialogueActGoal(text_or_key='Hi! My name is <prosody pitch="high" volume="x-loud">Lu</prosody><prosody pitch="low" volume="soft" rate="fast">pay</prosody>'))
+
 
 if __name__ == "__main__":
     rospy.init_node("test_action_client", disable_signals=True)
